@@ -58,6 +58,23 @@ fn main() {
 
     println!("Starting manual file polling for: {}", watch_dir);
 
+    // INITIAL SCAN: Read all existing files without emitting events
+    println!("Performing initial scan of existing files...");
+    if let Ok(entries) = fs::read_dir(watch_dir) {
+        for entry in entries {
+            if let Ok(entry) = entry {
+                let path = entry.path();
+                if path.is_file() {
+                    if let Ok(content) = fs::read_to_string(&path) {
+                        let path_str = path.to_string_lossy().to_string();
+                        file_contents.insert(path_str, content);
+                    }
+                }
+            }
+        }
+    }
+    println!("Initial scan complete. Monitoring for new changes...");
+
     tauri::Builder::default()
         .setup(move |app| {
             let app_handle = app.handle().clone();
@@ -87,8 +104,21 @@ fn main() {
                                                     }).unwrap();
                                                 }
                                             }
+                                        } else {
+                                            // New file detected (created after initial scan)
+                                            if let Some(last_line) = content.lines().last() {
+                                                println!("--- NEW FILE DETECTED --- {}: {}", chat_type, last_line);
+
+                                                // Emit event to frontend
+                                                app_handle.emit("file-changed", FileChangeEvent {
+                                                    path: path_str.clone(),
+                                                    line: last_line.to_string(),
+                                                    chat_type: chat_type.clone(),
+                                                }).unwrap();
+                                            }
                                         }
-                                        // Update stored content
+                                        
+                                        // Update stored content (for both new and existing files)
                                         file_contents.insert(path_str, content);
                                     }
                                 }
