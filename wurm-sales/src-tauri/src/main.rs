@@ -16,6 +16,14 @@ struct FileChangeEvent {
     chat_type: String,
 }
 
+#[derive(Clone, Serialize)]
+struct SkillGainEvent {
+    skill_name: String,
+    current_level: f64,
+    gain: f64,
+    session_gain: f64,
+}
+
 fn get_chat_type(path_str: &str) -> String {
     // Extract filename from path
     if let Some(filename) = Path::new(path_str).file_name() {
@@ -43,15 +51,57 @@ fn get_chat_type(path_str: &str) -> String {
             if filename_str.contains("PM__") {
                 return "PM".to_string();
             }
-
         }
     }
     "unknown".to_string()
 }
 
+fn parse_skill_gain(line: &str) -> Option<(String, f64, f64)> {
+    // Look for skill gain messages like:
+    // "[06:25:41] Stone cutting increased by 0.0010 to 62.6648"
+    if line.contains("increased by") && line.contains("to") {
+        // Skip timestamp if present (starts with [HH:MM:SS])
+        let content = if line.starts_with('[') && line.len() > 10 {
+            // Find the end of timestamp and skip it
+            if let Some(timestamp_end) = line.find("] ") {
+                &line[timestamp_end + 2..]
+            } else {
+                line
+            }
+        } else {
+            line
+        };
+
+        // Extract skill name (everything before " increased")
+        if let Some(skill_end) = content.find(" increased") {
+            let skill_name = content[..skill_end].trim().to_string();
+
+            // Extract gain amount between "by " and " to"
+            if let Some(gain_start) = content.find("by ") {
+                if let Some(gain_end) = content.find(" to") {
+                    if let Ok(gain) = content[gain_start + 3..gain_end].trim().parse::<f64>() {
+                        // Extract current level after "to "
+                        if let Some(level_start) = content.find("to ") {
+                            if let Ok(current_level) =
+                                content[level_start + 3..].trim().parse::<f64>()
+                            {
+                                return Some((skill_name, gain, current_level));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
 fn main() {
     // Store the last known content of each file
     let mut file_contents: HashMap<String, String> = HashMap::new();
+
+    // Track skill starting levels for this session
+    let mut skill_starting_levels: HashMap<String, f64> = HashMap::new();
 
     // The directory to monitor
     let watch_dir = "C:\\Users\\johnw\\wurm\\players\\jackjones\\logs";
@@ -96,7 +146,28 @@ fn main() {
                                                 if let Some(last_line) = content.lines().last() {
                                                     println!("--- FILE CHANGED --- {}: {}", chat_type, last_line);
 
-                                                    // Emit event to frontend
+                                                    // Check for skill gains
+                                                    if let Some((skill_name, gain, current_level)) = parse_skill_gain(last_line) {
+                                                        // Track session starting level
+                                                        let starting_level = skill_starting_levels
+                                                            .entry(skill_name.clone())
+                                                            .or_insert(current_level - gain);
+
+                                                        // Calculate session gain
+                                                        let session_gain = current_level - *starting_level;
+                                                        println!("--- SKILL GAIN --- {}: +{:.4} (session: +{:.4})", 
+                                                                skill_name, gain, session_gain);
+
+                                                        // Emit skill gain event to frontend
+                                                        app_handle.emit("skill-gained", SkillGainEvent {
+                                                            skill_name: skill_name.clone(),
+                                                            current_level,
+                                                            gain,
+                                                            session_gain,
+                                                        }).unwrap();
+                                                    }
+
+                                                    // Emit regular file change event
                                                     app_handle.emit("file-changed", FileChangeEvent {
                                                         path: path_str.clone(),
                                                         line: last_line.to_string(),
@@ -109,7 +180,26 @@ fn main() {
                                             if let Some(last_line) = content.lines().last() {
                                                 println!("--- NEW FILE DETECTED --- {}: {}", chat_type, last_line);
 
-                                                // Emit event to frontend
+                                                // Check for skill gains in new files too
+                                                if let Some((skill_name, gain, current_level)) = parse_skill_gain(last_line) {
+                                                    let starting_level = skill_starting_levels
+                                                        .entry(skill_name.clone())
+                                                        .or_insert(current_level - gain);
+
+                                                    let session_gain = current_level - *starting_level;
+
+                                                    println!("--- SKILL GAIN (NEW FILE) --- {}: +{:.4} (session: +{:.4})", 
+                                                            skill_name, gain, session_gain);
+
+                                                    app_handle.emit("skill-gained", SkillGainEvent {
+                                                        skill_name: skill_name.clone(),
+                                                        current_level,
+                                                        gain,
+                                                        session_gain,
+                                                    }).unwrap();
+                                                }
+
+                                                // Emit regular file change event
                                                 app_handle.emit("file-changed", FileChangeEvent {
                                                     path: path_str.clone(),
                                                     line: last_line.to_string(),
@@ -117,7 +207,6 @@ fn main() {
                                                 }).unwrap();
                                             }
                                         }
-                                        
                                         // Update stored content (for both new and existing files)
                                         file_contents.insert(path_str, content);
                                     }
@@ -134,4 +223,3 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("error while running Tauri app");
 }
-
