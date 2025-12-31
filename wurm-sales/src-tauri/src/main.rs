@@ -4,6 +4,7 @@
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
+use std::path::Path;
 use std::thread;
 use std::time::Duration;
 use tauri::Emitter;
@@ -12,28 +13,40 @@ use tauri::Emitter;
 struct FileChangeEvent {
     path: String,
     line: String,
-    category: String,
+    chat_type: String,
 }
 
-fn categorize_log_line(line: &str) -> String {
-    let line_lower = line.to_lowercase();
+fn get_chat_type(path_str: &str) -> String {
+    // Extract filename from path
+    if let Some(filename) = Path::new(path_str).file_name() {
+        if let Some(filename_str) = filename.to_str() {
+            // Remove underscore prefix and take everything before first dot
+            if filename_str.starts_with('_') {
+                if let Some(dot_pos) = filename_str.find('.') {
+                    return filename_str[1..dot_pos].to_string();
+                }
+            }
 
-    // Wurm Online log categorization examples
-    if line_lower.contains("killed") || line_lower.contains("slain") || line_lower.contains("combat") {
-        "combat".to_string()
-    } else if line_lower.contains("trades") || line_lower.contains("sold") || line_lower.contains("bought") || line_lower.contains("coin") {
-        "trading".to_string()
-    } else if line_lower.contains("crafted") || line_lower.contains("created") || line_lower.contains("improved") {
-        "crafting".to_string()
-    } else if line_lower.contains("joined") || line_lower.contains("left") || line_lower.contains("logged") {
-        "player_activity".to_string()
-    } else if line_lower.contains("server") || line_lower.contains("system") || line_lower.contains("maintenance") {
-        "system".to_string()
-    } else if line_lower.contains("skill") || line_lower.contains("learned") || line_lower.contains("gained") {
-        "skill_progress".to_string()
-    } else {
-        "general".to_string()
+            if filename_str.contains("GL-Freedom.") {
+                return "GL-Freedom".to_string();
+            }
+
+            if filename_str.contains("CA_HELP.") {
+                return "CA-Help".to_string();
+            }
+
+            if filename_str.contains("Trade.") {
+                return "Trade".to_string();
+            }
+
+            // PM__
+            if filename_str.contains("PM__") {
+                return "PM".to_string();
+            }
+
+        }
     }
+    "unknown".to_string()
 }
 
 fn main() {
@@ -59,18 +72,18 @@ fn main() {
                                 if path.is_file() {
                                     if let Ok(content) = fs::read_to_string(&path) {
                                         let path_str = path.to_string_lossy().to_string();
+                                        let chat_type = get_chat_type(&path_str);
                                         if let Some(last_content) = file_contents.get(&path_str) {
                                             if content != *last_content {
                                                 // Content actually changed!
                                                 if let Some(last_line) = content.lines().last() {
-                                                    let category = categorize_log_line(last_line);
-                                                    println!("--- FILE CHANGED [{}] --- {}: {}", category, path_str, last_line);
+                                                    println!("--- FILE CHANGED --- {}: {}", chat_type, last_line);
 
                                                     // Emit event to frontend
                                                     app_handle.emit("file-changed", FileChangeEvent {
                                                         path: path_str.clone(),
                                                         line: last_line.to_string(),
-                                                        category,
+                                                        chat_type: chat_type.clone(),
                                                     }).unwrap();
                                                 }
                                             }
