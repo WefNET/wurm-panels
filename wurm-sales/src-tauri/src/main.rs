@@ -108,6 +108,16 @@ async fn get_settings(settings_state: tauri::State<'_, SharedSettings>) -> Resul
 }
 
 #[tauri::command]
+async fn get_skill_sessions(
+    skill_state: tauri::State<'_, SharedSkillSessions>,
+) -> Result<Vec<SkillSessionData>, String> {
+    let sessions = skill_state
+        .lock()
+        .map_err(|e| format!("Failed to access skill sessions: {}", e))?;
+    Ok(sessions.values().cloned().collect())
+}
+
+#[tauri::command]
 async fn update_settings(
     app: tauri::AppHandle,
     settings_state: tauri::State<'_, SharedSettings>,
@@ -155,6 +165,7 @@ fn main() {
             open_skills_window,
             open_settings_window,
             get_settings,
+            get_skill_sessions,
             update_settings
         ])
         .setup(move |app| {
