@@ -65,6 +65,15 @@
             margin-bottom: 6px;
         }
 
+        .input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-row input[type="text"] {
+            flex: 1;
+        }
+
         input[type="text"] {
             width: 100%;
             padding: 8px 10px;
@@ -78,6 +87,21 @@
             border-color: #2196F3;
             outline: none;
             box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+        }
+
+        .browse-button {
+            padding: 8px 14px;
+            border-radius: 4px;
+            border: 1px solid #2196F3;
+            background: #2196F3;
+            color: #fff;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .browse-button:hover {
+            background: #1976D2;
+            border-color: #1976D2;
         }
 
         .actions {
@@ -122,7 +146,10 @@
         <div class="content">
             <form id="settings-form">
                 <label for="watch-dir">Wurm player log directory</label>
-                <input type="text" id="watch-dir" name="watch-dir" placeholder="C:\Users\<name>\\wurm\players\<character>\logs" autocomplete="off" />
+                <div class="input-row">
+                    <input type="text" id="watch-dir" name="watch-dir" placeholder="C:\Users\<name>\\wurm\players\<character>\logs" autocomplete="off" />
+                    <button type="button" id="choose-folder" class="browse-button" aria-label="Choose folder">Browse...</button>
+                </div>
                 <div class="actions">
                     <button type="submit" class="save-button">Save</button>
                 </div>
@@ -132,12 +159,13 @@
     </div>
 
     <script>
-        const { core, event, window: tauriWindow } = window.__TAURI__;
+        const { core, event, window: tauriWindow, dialog } = window.__TAURI__;
 
         const form = document.getElementById('settings-form');
         const watchDirInput = document.getElementById('watch-dir');
         const statusEl = document.getElementById('status');
         const closeBtn = document.getElementById('close-button');
+        const chooseFolderBtn = document.getElementById('choose-folder');
 
         function setStatus(message, isError = false) {
             if (!statusEl) {
@@ -192,6 +220,31 @@
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
                 void closeCurrentWindow();
+            });
+        }
+
+        if (chooseFolderBtn) {
+            chooseFolderBtn.addEventListener('click', async () => {
+                if (!dialog || !watchDirInput) {
+                    return;
+                }
+
+                try {
+                    const selection = await dialog.open({
+                        directory: true,
+                        multiple: false,
+                        title: 'Select Wurm player log directory',
+                        defaultPath: watchDirInput.value || undefined,
+                    });
+
+                    if (typeof selection === 'string') {
+                        watchDirInput.value = selection;
+                        setStatus('');
+                    }
+                } catch (error) {
+                    console.error('Failed to choose folder:', error);
+                    setStatus('Unable to open folder picker.', true);
+                }
             });
         }
 

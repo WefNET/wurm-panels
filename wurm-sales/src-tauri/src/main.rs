@@ -301,6 +301,8 @@ fn main() {
     let settings_for_thread = Arc::clone(&settings);
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .manage(Arc::clone(&skill_sessions))
         .manage(Arc::clone(&settings))
         .invoke_handler(tauri::generate_handler![
