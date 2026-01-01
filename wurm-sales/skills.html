@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wurm Skills Tracker</title>
+    <style>
+        body {
+            font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f6f6f6;
+        }
+
+        h1 {
+            text-align: center;
+            color: #0f0f0f;
+            margin-bottom: 20px;
+        }
+
+        /* Skills table */
+        .skills-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-family: monospace;
+            font-size: 14px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .skills-table th, .skills-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .skills-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+
+        .skills-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .skills-table tr:hover {
+            background-color: #e6f3ff;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Wurm Skills Session Tracker</h1>
+    <div id="skills-container">
+        <table class="skills-table">
+            <thead>
+                <tr>
+                    <th>Skill</th>
+                    <th>Start Level</th>
+                    <th>Session Gain</th>
+                    <th>Last Gain</th>
+                </tr>
+            </thead>
+            <tbody id="skills-tbody">
+                <tr>
+                    <td colspan="4" class="no-data">No skill data yet. Start playing Wurm to see your progress!</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Function to escape HTML entities
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Listen for skill session updates
+        window.__TAURI__.event.listen('skill-sessions', (event) => {
+            console.log('🎯 SKILL SESSIONS UPDATED (Skills Window):', event.payload);
+            
+            const tbody = document.getElementById('skills-tbody');
+            
+            if (event.payload.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="no-data">No skill data yet. Start playing Wurm to see your progress!</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = ''; // Clear existing rows
+            
+            // Sort skills alphabetically
+            const sortedSkills = event.payload.sort((a, b) => a.skill_name.localeCompare(b.skill_name));
+            
+            for (const skill of sortedSkills) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${escapeHtml(skill.skill_name)}</td>
+                    <td>${skill.start_level.toFixed(4)}</td>
+                    <td>+${skill.session_gain.toFixed(4)}</td>
+                    <td>+${skill.last_gain.toFixed(4)}</td>
+                `;
+                tbody.appendChild(row);
+            }
+        });
+
+        console.log('Skills window loaded and listening for events');
+    </script>
+</body>
+</html>
