@@ -33,8 +33,8 @@ async fn open_skills_window(
     skill_state: tauri::State<'_, SharedSkillSessions>,
 ) -> Result<(), String> {
     if let Some(existing) = app.get_webview_window("skills") {
-        println!("Skills window already open; focusing existing instance");
-        let _ = existing.set_focus();
+        println!("Skills window already open; showing existing instance");
+        let _ = existing.show();
         return Ok(());
     }
 
@@ -42,9 +42,12 @@ async fn open_skills_window(
 
     match tauri::webview::WebviewWindowBuilder::new(&app, "skills", url)
         .title("Wurm Skills Tracker")
-        .inner_size(600.0, 400.0)
-        .resizable(true)
-        .decorations(true)
+        .inner_size(600.0, 300.0)
+        .resizable(false)
+        .decorations(false)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .focusable(false)
         .build()
     {
         Ok(window) => {
