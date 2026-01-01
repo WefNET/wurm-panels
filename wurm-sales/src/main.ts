@@ -14,6 +14,10 @@ interface SkillSessionData {
   last_gain: number;
 }
 
+interface AppSettings {
+  watch_dir: string;
+}
+
 // Function to escape HTML entities
 function escapeHtml(text: string): string {
   const div = document.createElement('div');
@@ -83,10 +87,15 @@ listen<SkillSessionData[]>('skill-sessions', (event) => {
 const app = document.querySelector<HTMLDivElement>('#app')!
 console.log('App element found:', app);
 
-const openSkillsButton = document.createElement('button');
-openSkillsButton.textContent = 'Open Skills Window';
-openSkillsButton.style.cssText = `
+const controls = document.createElement('div');
+controls.style.cssText = `
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 10px;
+`;
+
+const buttonStyle = `
   padding: 8px 16px;
   background-color: #4CAF50;
   color: white;
@@ -95,7 +104,11 @@ openSkillsButton.style.cssText = `
   cursor: pointer;
   font-size: 14px;
 `;
-console.log('Button created:', openSkillsButton);
+
+const openSkillsButton = document.createElement('button');
+openSkillsButton.textContent = 'Open Skills Window';
+openSkillsButton.style.cssText = buttonStyle;
+console.log('Skills button created:', openSkillsButton);
 
 openSkillsButton.addEventListener('click', async () => {
   console.log('Open Skills Window button clicked');
@@ -108,6 +121,52 @@ openSkillsButton.addEventListener('click', async () => {
   }
 });
 
-app.insertBefore(openSkillsButton, app.firstChild);
-console.log('Button inserted into DOM. Total children:', app.children.length);
-console.log('First child is button:', app.firstChild === openSkillsButton);
+const openSettingsButton = document.createElement('button');
+openSettingsButton.textContent = 'Settings';
+openSettingsButton.style.cssText = buttonStyle;
+openSettingsButton.style.backgroundColor = '#2196F3';
+console.log('Settings button created:', openSettingsButton);
+
+openSettingsButton.addEventListener('click', async () => {
+  console.log('Open Settings button clicked');
+  try {
+    await invoke('open_settings_window');
+    console.log('Settings window opened');
+  } catch (error) {
+    console.error('Failed to open settings window:', error);
+  }
+});
+
+const watchDirInfo = document.createElement('div');
+watchDirInfo.style.cssText = `
+  font-size: 12px;
+  color: #333;
+`;
+
+function updateWatchDirDisplay(value: string) {
+  const displayValue = value ? value : 'Not configured';
+  watchDirInfo.textContent = `Watching: ${displayValue}`;
+}
+
+controls.appendChild(openSkillsButton);
+controls.appendChild(openSettingsButton);
+controls.appendChild(watchDirInfo);
+
+app.insertBefore(controls, app.firstChild);
+console.log('Controls inserted into DOM. Total children:', app.children.length);
+
+listen<AppSettings>('settings-updated', (event) => {
+  console.log('Settings updated:', event.payload);
+  updateWatchDirDisplay(event.payload.watch_dir);
+});
+
+void (async () => {
+  try {
+    const settings = await invoke<AppSettings>('get_settings');
+    console.log('Loaded settings:', settings);
+    updateWatchDirDisplay(settings.watch_dir);
+  } catch (error) {
+    console.error('Failed to load settings:', error);
+    updateWatchDirDisplay('');
+  }
+})();

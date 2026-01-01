@@ -121,9 +121,44 @@
 
     <script>
         const closeButton = document.getElementById('close-button');
-        if (closeButton && window.__TAURI__ && window.__TAURI__.window) {
+
+        async function closeCurrentWindow() {
+            const tauriWindow = window.__TAURI__?.window;
+            if (!tauriWindow) {
+                return;
+            }
+
+            try {
+                if (typeof tauriWindow.getCurrent === 'function') {
+                    const currentWindow = tauriWindow.getCurrent();
+                    if (currentWindow && typeof currentWindow.close === 'function') {
+                        await currentWindow.close();
+                        return;
+                    }
+                }
+
+                if (typeof tauriWindow.getCurrentWindow === 'function') {
+                    const currentWindow = tauriWindow.getCurrentWindow();
+                    if (currentWindow && typeof currentWindow.close === 'function') {
+                        await currentWindow.close();
+                        return;
+                    }
+                }
+
+                if (
+                    tauriWindow.appWindow &&
+                    typeof tauriWindow.appWindow.close === 'function'
+                ) {
+                    await tauriWindow.appWindow.close();
+                }
+            } catch (error) {
+                console.error('Failed to close skills window:', error);
+            }
+        }
+
+        if (closeButton) {
             closeButton.addEventListener('click', () => {
-                window.__TAURI__.window.appWindow.close();
+                void closeCurrentWindow();
             });
         }
 

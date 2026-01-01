@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <style>
+        :root {
+            color-scheme: light;
+        }
+
+        body {
+            font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background: #f0f3f7;
+            color: #0f0f0f;
+        }
+
+        .window {
+            padding: 12px 16px 20px;
+        }
+
+        .titlebar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(38, 38, 38, 0.92);
+            color: #f6f6f6;
+            padding: 6px 12px;
+            border-radius: 8px 8px 0 0;
+            -webkit-app-region: drag;
+        }
+
+        .title {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .close-button {
+            -webkit-app-region: no-drag;
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
+            color: #f6f6f6;
+            padding: 2px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .close-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .content {
+            background: #ffffff;
+            border-radius: 0 0 8px 8px;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 4px;
+            border: 1px solid #cbd3df;
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus {
+            border-color: #2196F3;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+        }
+
+        .actions {
+            margin-top: 16px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        button.save-button {
+            background: #2196F3;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        button.save-button:hover {
+            background: #1976D2;
+        }
+
+        .status {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #2e7d32;
+            min-height: 16px;
+        }
+
+        .status.error {
+            color: #c62828;
+        }
+    </style>
+</head>
+<body>
+    <div class="window">
+        <div class="titlebar" data-tauri-drag-region>
+            <span class="title">Settings</span>
+            <button type="button" id="close-button" class="close-button" aria-label="Close settings">Close</button>
+        </div>
+        <div class="content">
+            <form id="settings-form">
+                <label for="watch-dir">Wurm player log directory</label>
+                <input type="text" id="watch-dir" name="watch-dir" placeholder="C:\Users\<name>\\wurm\players\<character>\logs" autocomplete="off" />
+                <div class="actions">
+                    <button type="submit" class="save-button">Save</button>
+                </div>
+                <div id="status" class="status"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const { core, event, window: tauriWindow } = window.__TAURI__;
+
+        const form = document.getElementById('settings-form');
+        const watchDirInput = document.getElementById('watch-dir');
+        const statusEl = document.getElementById('status');
+        const closeBtn = document.getElementById('close-button');
+
+        function setStatus(message, isError = false) {
+            if (!statusEl) {
+                return;
+            }
+            statusEl.textContent = message;
+            statusEl.classList.toggle('error', Boolean(isError));
+        }
+
+        function applySettings(settings) {
+            if (!settings) {
+                return;
+            }
+            if (watchDirInput) {
+                watchDirInput.value = settings.watch_dir ?? '';
+            }
+        }
+
+        async function closeCurrentWindow() {
+            if (!tauriWindow) {
+                return;
+            }
+
+            try {
+                if (typeof tauriWindow.getCurrent === 'function') {
+                    const currentWindow = tauriWindow.getCurrent();
+                    if (currentWindow && typeof currentWindow.close === 'function') {
+                        await currentWindow.close();
+                        return;
+                    }
+                }
+
+                if (typeof tauriWindow.getCurrentWindow === 'function') {
+                    const currentWindow = tauriWindow.getCurrentWindow();
+                    if (currentWindow && typeof currentWindow.close === 'function') {
+                        await currentWindow.close();
+                        return;
+                    }
+                }
+
+                if (
+                    tauriWindow.appWindow &&
+                    typeof tauriWindow.appWindow.close === 'function'
+                ) {
+                    await tauriWindow.appWindow.close();
+                }
+            } catch (error) {
+                console.error('Failed to close settings window:', error);
+            }
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                void closeCurrentWindow();
+            });
+        }
+
+        if (form) {
+            form.addEventListener('submit', async (eventObj) => {
+                eventObj.preventDefault();
+                if (!watchDirInput) {
+                    return;
+                }
+
+                const value = watchDirInput.value.trim();
+                try {
+                    await core.invoke('update_settings', { payload: { watch_dir: value } });
+                    setStatus('Settings saved.');
+                } catch (error) {
+                    console.error('Failed to save settings:', error);
+                    setStatus('Failed to save settings.', true);
+                }
+            });
+        }
+
+        event.listen('settings-data', (eventObj) => {
+            applySettings(eventObj.payload);
+        });
+
+        (async () => {
+            try {
+                const settings = await core.invoke('get_settings');
+                applySettings(settings);
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+                setStatus('Unable to load saved settings.', true);
+            }
+        })();
+    </script>
+</body>
+</html>
