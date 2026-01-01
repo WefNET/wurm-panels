@@ -114,3 +114,45 @@ button {
     background-color: #0f0f0f69;
   }
 }
+
+/* Wurm log styles */
+.log-entry {
+  margin: 2px 0;
+  padding: 2px 4px;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.chat-GL-Freedom { color: #228B22; }
+.chat-CA-Help { color: #FF4500; }
+.chat-Trade { color: #FFD700; }
+.chat-PM { color: #8A2BE2; }
+.chat-unknown { color: #666; }
+
+/* Skills table */
+.skills-table {
+  margin: 20px 0;
+  border-collapse: collapse;
+  width: 100%;
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.skills-table th, .skills-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.skills-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.skills-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.skills-table tr:hover {
+  background-color: #e6f3ff;
+}

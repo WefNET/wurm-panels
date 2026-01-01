@@ -24,6 +24,14 @@ struct SkillGainEvent {
     session_gain: f64,
 }
 
+#[derive(Clone, Serialize)]
+struct SkillSessionData {
+    skill_name: String,
+    start_level: f64,
+    session_gain: f64,
+    last_gain: f64,
+}
+
 fn get_chat_type(path_str: &str) -> String {
     // Extract filename from path
     if let Some(filename) = Path::new(path_str).file_name() {
@@ -100,8 +108,8 @@ fn main() {
     // Store the last known content of each file
     let mut file_contents: HashMap<String, String> = HashMap::new();
 
-    // Track skill starting levels for this session
-    let mut skill_starting_levels: HashMap<String, f64> = HashMap::new();
+    // Track skill session data for this session
+    let mut skill_sessions: HashMap<String, SkillSessionData> = HashMap::new();
 
     // The directory to monitor
     let watch_dir = "C:\\Users\\johnw\\wurm\\players\\jackjones\\logs";
@@ -148,23 +156,25 @@ fn main() {
 
                                                     // Check for skill gains
                                                     if let Some((skill_name, gain, current_level)) = parse_skill_gain(last_line) {
-                                                        // Track session starting level
-                                                        let starting_level = skill_starting_levels
-                                                            .entry(skill_name.clone())
-                                                            .or_insert(current_level - gain);
-
-                                                        // Calculate session gain
-                                                        let session_gain = current_level - *starting_level;
-                                                        println!("--- SKILL GAIN --- {}: +{:.4} (session: +{:.4})", 
-                                                                skill_name, gain, session_gain);
-
-                                                        // Emit skill gain event to frontend
-                                                        app_handle.emit("skill-gained", SkillGainEvent {
+                                                        // Update or insert skill session data
+                                                        skill_sessions.entry(skill_name.clone()).or_insert_with(|| SkillSessionData {
                                                             skill_name: skill_name.clone(),
-                                                            current_level,
-                                                            gain,
-                                                            session_gain,
-                                                        }).unwrap();
+                                                            start_level: current_level - gain,
+                                                            session_gain: 0.0,
+                                                            last_gain: 0.0,
+                                                        });
+
+                                                        if let Some(session_data) = skill_sessions.get_mut(&skill_name) {
+                                                            session_data.session_gain = current_level - session_data.start_level;
+                                                            session_data.last_gain = gain;
+                                                        }
+
+                                                        println!("--- SKILL GAIN --- {}: +{:.4} (session: +{:.4})", 
+                                                                skill_name, gain, skill_sessions.get(&skill_name).unwrap().session_gain);
+
+                                                        // Emit all skill session data to frontend
+                                                        let session_data_vec: Vec<SkillSessionData> = skill_sessions.values().cloned().collect();
+                                                        app_handle.emit("skill-sessions", session_data_vec).unwrap();
                                                     }
 
                                                     // Emit regular file change event
@@ -182,21 +192,23 @@ fn main() {
 
                                                 // Check for skill gains in new files too
                                                 if let Some((skill_name, gain, current_level)) = parse_skill_gain(last_line) {
-                                                    let starting_level = skill_starting_levels
-                                                        .entry(skill_name.clone())
-                                                        .or_insert(current_level - gain);
+                                                    skill_sessions.entry(skill_name.clone()).or_insert_with(|| SkillSessionData {
+                                                        skill_name: skill_name.clone(),
+                                                        start_level: current_level - gain,
+                                                        session_gain: 0.0,
+                                                        last_gain: 0.0,
+                                                    });
 
-                                                    let session_gain = current_level - *starting_level;
+                                                    if let Some(session_data) = skill_sessions.get_mut(&skill_name) {
+                                                        session_data.session_gain = current_level - session_data.start_level;
+                                                        session_data.last_gain = gain;
+                                                    }
 
                                                     println!("--- SKILL GAIN (NEW FILE) --- {}: +{:.4} (session: +{:.4})", 
-                                                            skill_name, gain, session_gain);
+                                                            skill_name, gain, skill_sessions.get(&skill_name).unwrap().session_gain);
 
-                                                    app_handle.emit("skill-gained", SkillGainEvent {
-                                                        skill_name: skill_name.clone(),
-                                                        current_level,
-                                                        gain,
-                                                        session_gain,
-                                                    }).unwrap();
+                                                    let session_data_vec: Vec<SkillSessionData> = skill_sessions.values().cloned().collect();
+                                                    app_handle.emit("skill-sessions", session_data_vec).unwrap();
                                                 }
 
                                                 // Emit regular file change event
