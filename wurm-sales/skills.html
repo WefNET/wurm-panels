@@ -76,6 +76,28 @@
             font-weight: bold;
             position: sticky;
             top: 0;
+            cursor: default;
+        }
+
+        .skills-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .skills-table th.sortable::after {
+            content: '';
+            display: inline-block;
+            margin-left: 6px;
+            color: #555;
+            font-size: 10px;
+        }
+
+        .skills-table th.sortable[data-sort-direction="asc"]::after {
+            content: '▲';
+        }
+
+        .skills-table th.sortable[data-sort-direction="desc"]::after {
+            content: '▼';
         }
 
         .skills-table tr:nth-child(even) {
@@ -105,10 +127,10 @@
         <table class="skills-table">
             <thead>
                 <tr>
-                    <th>Skill</th>
-                    <th>Start Level</th>
-                    <th>Session Gain</th>
-                    <th>Last Gain</th>
+                    <th class="sortable" data-sort-column="skill_name">Skill</th>
+                    <th class="sortable" data-sort-column="start_level">Start Level</th>
+                    <th class="sortable" data-sort-column="session_gain">Session Gain</th>
+                    <th class="sortable" data-sort-column="last_gain">Last Gain</th>
                 </tr>
             </thead>
             <tbody id="skills-tbody">
@@ -169,17 +191,62 @@
         }
 
         const { event, core } = window.__TAURI__;
+        const sortState = {
+            column: 'skill_name',
+            direction: 'asc',
+        };
+        let lastSkillsPayload = [];
 
-        function updateSkillsTable(skills) {
+        function sortSkills(skills) {
+            const sorted = skills.slice();
+            const directionFactor = sortState.direction === 'asc' ? 1 : -1;
+
+            sorted.sort((a, b) => {
+                const column = sortState.column;
+
+                if (column === 'skill_name') {
+                    return directionFactor * a.skill_name.localeCompare(b.skill_name);
+                }
+
+                const left = a[column];
+                const right = b[column];
+
+                if (left === right) {
+                    return a.skill_name.localeCompare(b.skill_name);
+                }
+
+                return directionFactor * (left < right ? -1 : 1);
+            });
+
+            return sorted;
+        }
+
+        function updateSortIndicators() {
+            const headers = document.querySelectorAll('[data-sort-column]');
+            headers.forEach((header) => {
+                const column = header.getAttribute('data-sort-column');
+                if (column === sortState.column) {
+                    header.setAttribute('data-sort-direction', sortState.direction);
+                } else {
+                    header.removeAttribute('data-sort-direction');
+                }
+            });
+        }
+
+        function renderSkillsFromCache() {
             const tbody = document.getElementById('skills-tbody');
-
-            if (!Array.isArray(skills) || skills.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="no-data">No skill data yet. Start playing Wurm to see your progress!</td></tr>';
+            if (!tbody) {
                 return;
             }
 
+            if (!Array.isArray(lastSkillsPayload) || lastSkillsPayload.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="no-data">No skill data yet. Start playing Wurm to see your progress!</td></tr>';
+                updateSortIndicators();
+                return;
+            }
+
+            const sortedSkills = sortSkills(lastSkillsPayload);
             tbody.innerHTML = '';
-            const sortedSkills = skills.slice().sort((a, b) => a.skill_name.localeCompare(b.skill_name));
 
             for (const skill of sortedSkills) {
                 const row = document.createElement('tr');
@@ -191,6 +258,33 @@
                 `;
                 tbody.appendChild(row);
             }
+
+            updateSortIndicators();
+        }
+
+        function updateSkillsTable(skills) {
+            if (!Array.isArray(skills) || skills.length === 0) {
+                lastSkillsPayload = [];
+            } else {
+                lastSkillsPayload = skills.map((skill) => ({ ...skill }));
+            }
+
+            renderSkillsFromCache();
+        }
+
+        function applySort(column) {
+            if (!column) {
+                return;
+            }
+
+            if (sortState.column === column) {
+                sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortState.column = column;
+                sortState.direction = column === 'skill_name' ? 'asc' : 'desc';
+            }
+
+            renderSkillsFromCache();
         }
 
         event.listen('skill-sessions', (evt) => {
@@ -208,6 +302,15 @@
         }
 
         void requestInitialSkillData();
+        updateSortIndicators();
+
+        const sortableHeaders = document.querySelectorAll('[data-sort-column]');
+        sortableHeaders.forEach((header) => {
+            header.addEventListener('click', () => {
+                applySort(header.getAttribute('data-sort-column'));
+            });
+        });
+
         console.log('Skills window loaded, requesting initial data, and listening for events');
     </script>
 </body>
