@@ -65,6 +65,22 @@ openSkillsButton.addEventListener('click', async () => {
   }
 });
 
+const openTradeButton = document.createElement('button');
+openTradeButton.textContent = 'Open Trade Window';
+openTradeButton.style.cssText = buttonStyle;
+openTradeButton.style.backgroundColor = '#8E24AA';
+console.log('Trade button created:', openTradeButton);
+
+openTradeButton.addEventListener('click', async () => {
+  console.log('Open Trade Window button clicked');
+  try {
+    await invoke('open_trade_window');
+    console.log('Trade window command invoked successfully');
+  } catch (error) {
+    console.error('Failed to open trade window:', error);
+  }
+});
+
 const openSettingsButton = document.createElement('button');
 openSettingsButton.textContent = 'Settings';
 openSettingsButton.style.cssText = buttonStyle;
@@ -93,6 +109,7 @@ function updateWatchDirDisplay(value: string) {
 }
 
 controls.appendChild(openSkillsButton);
+controls.appendChild(openTradeButton);
 controls.appendChild(openSettingsButton);
 controls.appendChild(watchDirInfo);
 

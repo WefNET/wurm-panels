@@ -1,5 +1,6 @@
 use crate::app_settings::SharedSettings;
 use crate::skill_sessions::{SharedSkillSessions, SkillSessionData};
+use crate::trade_entries::{truncate_entries, SharedTradeEntries, TradeEntry};
 use serde::Serialize;
 use std::collections::{HashMap, HashSet};
 use std::fs;
@@ -12,6 +13,7 @@ pub struct DirectoryWatcher {
     app_handle: AppHandle,
     skill_sessions: SharedSkillSessions,
     settings: SharedSettings,
+    trade_entries: SharedTradeEntries,
     poll_interval: Duration,
 }
 
@@ -20,11 +22,13 @@ impl DirectoryWatcher {
         app_handle: AppHandle,
         settings: SharedSettings,
         skill_sessions: SharedSkillSessions,
+        trade_entries: SharedTradeEntries,
     ) -> Self {
         Self {
             app_handle,
             skill_sessions,
             settings,
+            trade_entries,
             poll_interval: Duration::from_millis(500),
         }
     }
@@ -38,10 +42,11 @@ impl DirectoryWatcher {
             app_handle,
             skill_sessions,
             settings,
+            trade_entries,
             poll_interval,
         } = self;
 
-        let mut file_contents: HashMap<String, String> = HashMap::new();
+        let mut file_line_counts: HashMap<String, usize> = HashMap::new();
         let mut active_watch_dir = String::new();
         let mut logged_read_failures: HashSet<String> = HashSet::new();
 
@@ -61,13 +66,16 @@ impl DirectoryWatcher {
                 if !active_watch_dir.is_empty() {
                     println!("Watch directory cleared; resetting state");
                     active_watch_dir.clear();
-                    file_contents.clear();
+                    file_line_counts.clear();
                     logged_read_failures.clear();
                     if let Ok(mut sessions) = skill_sessions.lock() {
                         sessions.clear();
                     }
                     if let Err(err) = app_handle.emit("skill-sessions", Vec::<SkillSessionData>::new()) {
                         println!("Failed to emit skill session reset: {:?}", err);
+                    }
+                    if let Err(err) = app_handle.emit("trade-entries", Vec::<TradeEntry>::new()) {
+                        println!("Failed to emit trade entry reset: {:?}", err);
                     }
                 }
                 thread::sleep(poll_interval);
@@ -77,12 +85,12 @@ impl DirectoryWatcher {
             if active_watch_dir != current_watch_dir {
                 println!("Switching watch directory to {}", current_watch_dir);
                 active_watch_dir = current_watch_dir.clone();
-                file_contents.clear();
+                file_line_counts.clear();
                 logged_read_failures.clear();
 
                 if let Err(err) = Self::prime_directory_cache(
                     &active_watch_dir,
-                    &mut file_contents,
+                    &mut file_line_counts,
                     &mut logged_read_failures,
                 ) {
                     println!(
@@ -99,6 +107,12 @@ impl DirectoryWatcher {
                 if let Err(err) = app_handle.emit("skill-sessions", Vec::<SkillSessionData>::new()) {
                     println!("Failed to emit skill session reset: {:?}", err);
                 }
+                if let Ok(mut trades) = trade_entries.lock() {
+                    trades.clear();
+                }
+                if let Err(err) = app_handle.emit("trade-entries", Vec::<TradeEntry>::new()) {
+                    println!("Failed to emit trade entry reset: {:?}", err);
+                }
             }
 
             if active_watch_dir.is_empty() {
@@ -109,8 +123,9 @@ impl DirectoryWatcher {
             if let Err(err) = Self::scan_directory(
                 &app_handle,
                 &skill_sessions,
+                &trade_entries,
                 &active_watch_dir,
-                &mut file_contents,
+                &mut file_line_counts,
                 &mut logged_read_failures,
             ) {
                 println!(
@@ -127,7 +142,7 @@ impl DirectoryWatcher {
 
     fn prime_directory_cache(
         watch_dir: &str,
-        file_contents: &mut HashMap<String, String>,
+        file_line_counts: &mut HashMap<String, usize>,
         logged_read_failures: &mut HashSet<String>,
     ) -> Result<(), String> {
         let entries = fs::read_dir(watch_dir).map_err(|err| err.to_string())?;
@@ -139,7 +154,8 @@ impl DirectoryWatcher {
                 match read_file_contents(&path) {
                     Ok(content) => {
                         logged_read_failures.remove(&path_str);
-                        file_contents.insert(path_str, content);
+                        let line_count = content.lines().count();
+                        file_line_counts.insert(path_str, line_count);
                     }
                     Err(err) => {
                         if logged_read_failures.insert(path_str.clone()) {
@@ -157,8 +173,9 @@ impl DirectoryWatcher {
     fn scan_directory(
         app_handle: &AppHandle,
         skill_sessions: &SharedSkillSessions,
+        trade_entries: &SharedTradeEntries,
         watch_dir: &str,
-        file_contents: &mut HashMap<String, String>,
+        file_line_counts: &mut HashMap<String, usize>,
         logged_read_failures: &mut HashSet<String>,
     ) -> Result<(), String> {
         let entries = fs::read_dir(watch_dir).map_err(|err| err.to_string())?;
@@ -184,34 +201,36 @@ impl DirectoryWatcher {
             };
             let chat_type = get_chat_type(&path_str);
 
-            if let Some(last_content) = file_contents.get(&path_str) {
-                if content != *last_content {
-                    if let Some(last_line) = content.lines().last() {
-                        Self::handle_file_change(
-                            app_handle,
-                            skill_sessions,
-                            &path_str,
-                            &chat_type,
-                            last_line,
-                        );
+            let lines: Vec<&str> = content.lines().collect();
+            let total_lines = lines.len();
+
+            let previous_count = file_line_counts.get(&path_str).copied();
+
+            let new_lines_start = match previous_count {
+                Some(count) if count <= total_lines => count,
+                Some(_) => total_lines.saturating_sub(1),
+                None => total_lines.saturating_sub(1),
+            };
+
+            if new_lines_start < total_lines {
+                for line in &lines[new_lines_start..] {
+                    let trimmed_line = line.trim();
+                    if trimmed_line.is_empty() {
+                        continue;
                     }
+
+                    Self::handle_file_change(
+                        app_handle,
+                        skill_sessions,
+                        trade_entries,
+                        &path_str,
+                        &chat_type,
+                        trimmed_line,
+                    );
                 }
-            } else if let Some(last_line) = content.lines().last() {
-                println!("--- NEW FILE DETECTED --- {}: {}", chat_type, last_line);
-                Self::handle_skill_gain(
-                    app_handle,
-                    skill_sessions,
-                    last_line,
-                );
-                Self::emit_file_change(
-                    app_handle,
-                    &path_str,
-                    &chat_type,
-                    last_line,
-                );
             }
 
-            file_contents.insert(path_str, content);
+            file_line_counts.insert(path_str, total_lines);
         }
 
         Ok(())
@@ -220,6 +239,7 @@ impl DirectoryWatcher {
     fn handle_file_change(
         app_handle: &AppHandle,
         skill_sessions: &SharedSkillSessions,
+        trade_entries: &SharedTradeEntries,
         path: &str,
         chat_type: &str,
         last_line: &str,
@@ -227,6 +247,7 @@ impl DirectoryWatcher {
         println!("--- FILE CHANGED --- {}: {}", chat_type, last_line);
 
         Self::handle_skill_gain(app_handle, skill_sessions, last_line);
+        Self::handle_trade_message(app_handle, trade_entries, last_line);
         Self::emit_file_change(app_handle, path, chat_type, last_line);
     }
 
@@ -289,6 +310,25 @@ impl DirectoryWatcher {
             println!("Failed to emit file change event: {:?}", err);
         }
     }
+
+    fn handle_trade_message(
+        app_handle: &AppHandle,
+        trade_entries: &SharedTradeEntries,
+        line: &str,
+    ) {
+        if let Some(entry) = parse_trade_entry(line) {
+            if let Ok(mut entries) = trade_entries.lock() {
+                entries.push(entry.clone());
+                truncate_entries(&mut entries, 200);
+                let snapshot = entries.clone();
+                drop(entries);
+
+                if let Err(err) = app_handle.emit("trade-entries", snapshot) {
+                    println!("Failed to emit trade entries: {:?}", err);
+                }
+            }
+        }
+    }
 }
 
 #[derive(Clone, Serialize)]
@@ -307,19 +347,21 @@ fn get_chat_type(path_str: &str) -> String {
                 }
             }
 
-            if filename_str.contains("GL-Freedom.") {
+            let filename_upper = filename_str.to_ascii_uppercase();
+
+            if filename_upper.contains("GL-FREEDOM") {
                 return "GL-Freedom".to_string();
             }
 
-            if filename_str.contains("CA_HELP.") {
+            if filename_upper.contains("CA_HELP") {
                 return "CA-Help".to_string();
             }
 
-            if filename_str.contains("Trade.") {
+            if filename_upper.contains("TRADE") {
                 return "Trade".to_string();
             }
 
-            if filename_str.contains("PM__") {
+            if filename_upper.contains("PM__") {
                 return "PM".to_string();
             }
         }
@@ -363,4 +405,88 @@ fn parse_skill_gain(line: &str) -> Option<(String, f64, f64)> {
 fn read_file_contents(path: &Path) -> Result<String, std::io::Error> {
     let bytes = fs::read(path)?;
     Ok(String::from_utf8_lossy(&bytes).into_owned())
+}
+
+fn parse_trade_entry(line: &str) -> Option<TradeEntry> {
+    if line.trim().is_empty() {
+        return None;
+    }
+
+    let (timestamp, message) = if line.starts_with('[') {
+        if let Some(idx) = line.find("] ") {
+            (line[1..idx].to_string(), line[idx + 2..].trim().to_string())
+        } else {
+            (String::new(), line.trim().to_string())
+        }
+    } else {
+        (String::new(), line.trim().to_string())
+    };
+
+    if message.is_empty() {
+        return None;
+    }
+
+    let category = classify_trade_message(&message)?;
+
+    Some(TradeEntry {
+        category,
+        timestamp,
+        message,
+    })
+}
+
+fn classify_trade_message(message: &str) -> Option<String> {
+    let trimmed = message.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    if trimmed.starts_with('@') {
+        return Some("PM".to_string());
+    }
+
+    let mut cursor = trimmed;
+
+    if cursor.starts_with('<') {
+        if let Some(end) = cursor.find('>') {
+            cursor = cursor[end + 1..].trim_start();
+        }
+    }
+
+    if cursor.starts_with('(') {
+        if let Some(end) = cursor.find(')') {
+            cursor = cursor[end + 1..].trim_start();
+        }
+    }
+
+    for raw_token in cursor.split_whitespace() {
+        if raw_token.is_empty() {
+            continue;
+        }
+
+        if raw_token.starts_with('@') {
+            return Some("PM".to_string());
+        }
+
+        let token = raw_token
+            .trim_start_matches(|c: char| !c.is_alphanumeric())
+            .trim_end_matches(|c: char| !c.is_alphanumeric());
+
+        if token.is_empty() {
+            continue;
+        }
+
+        let token_upper = token.to_ascii_uppercase();
+
+        for part in token_upper.split('/') {
+            match part {
+                "WTB" => return Some("WTB".to_string()),
+                "WTS" | "WTT" => return Some("WTS".to_string()),
+                "PC" => return Some("PC".to_string()),
+                _ => {}
+            }
+        }
+    }
+
+    None
 }
