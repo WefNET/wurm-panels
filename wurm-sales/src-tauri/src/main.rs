@@ -34,13 +34,16 @@ async fn open_skills_window(
 
     match tauri::webview::WebviewWindowBuilder::new(&app, "skills", url)
         .title("Wurm Skills Tracker")
-        .inner_size(600.0, 300.0)
+        .inner_size(600.0, 140.0)
+        .min_inner_size(600.0, 140.0)
+        .max_inner_size(600.0, 300.0)
         .resizable(true)
         .decorations(false)
         .always_on_top(true)
         .skip_taskbar(true)
         .focusable(false)
         .transparent(true)
+        .shadow(false)
         .build()
     {
         Ok(window) => {

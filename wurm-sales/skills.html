@@ -143,9 +143,13 @@
 
     <script>
         const closeButton = document.getElementById('close-button');
+        const tauriWindow = window.__TAURI__?.window;
+        const WINDOW_WIDTH = 600;
+        const MIN_HEIGHT = 140;
+        const MAX_HEIGHT = 300;
+        let adjustHandle = null;
 
         async function closeCurrentWindow() {
-            const tauriWindow = window.__TAURI__?.window;
             if (!tauriWindow) {
                 return;
             }
@@ -197,6 +201,48 @@
         };
         let lastSkillsPayload = [];
 
+        async function adjustWindowHeight() {
+            if (!tauriWindow?.getCurrent) {
+                return;
+            }
+
+            const currentWindow = tauriWindow.getCurrent();
+            if (!currentWindow || typeof currentWindow.setSize !== 'function') {
+                return;
+            }
+
+            const titlebar = document.querySelector('.titlebar');
+            const container = document.getElementById('skills-container');
+            const titleHeight = titlebar?.offsetHeight ?? 0;
+            const contentHeight = container?.scrollHeight ?? 0;
+            const targetHeight = Math.min(
+                MAX_HEIGHT,
+                Math.max(MIN_HEIGHT, titleHeight + contentHeight)
+            );
+
+            const LogicalSize = tauriWindow.LogicalSize;
+            try {
+                if (typeof LogicalSize === 'function') {
+                    await currentWindow.setSize(new LogicalSize(WINDOW_WIDTH, targetHeight));
+                } else {
+                    await currentWindow.setSize({ width: WINDOW_WIDTH, height: targetHeight });
+                }
+            } catch (error) {
+                console.error('Failed to resize skills window:', error);
+            }
+        }
+
+        function scheduleAdjust() {
+            if (adjustHandle !== null) {
+                return;
+            }
+
+            adjustHandle = requestAnimationFrame(() => {
+                adjustHandle = null;
+                void adjustWindowHeight();
+            });
+        }
+
         function sortSkills(skills) {
             const sorted = skills.slice();
             const directionFactor = sortState.direction === 'asc' ? 1 : -1;
@@ -242,6 +288,7 @@
             if (!Array.isArray(lastSkillsPayload) || lastSkillsPayload.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" class="no-data">No skill data yet. Start playing Wurm to see your progress!</td></tr>';
                 updateSortIndicators();
+                scheduleAdjust();
                 return;
             }
 
@@ -260,6 +307,7 @@
             }
 
             updateSortIndicators();
+            scheduleAdjust();
         }
 
         function updateSkillsTable(skills) {
@@ -270,6 +318,7 @@
             }
 
             renderSkillsFromCache();
+            scheduleAdjust();
         }
 
         function applySort(column) {
@@ -303,6 +352,7 @@
 
         void requestInitialSkillData();
         updateSortIndicators();
+        scheduleAdjust();
 
         const sortableHeaders = document.querySelectorAll('[data-sort-column]');
         sortableHeaders.forEach((header) => {
@@ -310,6 +360,9 @@
                 applySort(header.getAttribute('data-sort-column'));
             });
         });
+
+        window.addEventListener('resize', scheduleAdjust);
+        window.addEventListener('load', scheduleAdjust);
 
         console.log('Skills window loaded, requesting initial data, and listening for events');
     </script>

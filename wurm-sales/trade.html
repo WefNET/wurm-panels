@@ -185,6 +185,12 @@
             }
         }
 
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         function renderEntries() {
             const filtered = tradeEntries.filter((entry) => entry.category === activeCategory);
 
@@ -196,7 +202,7 @@
             const fragments = filtered.map((entry) => `
                 <div class="entry">
                     <div class="timestamp">${entry.timestamp || 'Unknown time'}</div>
-                    <div class="message">${entry.message}</div>
+                    <div class="message">${escapeHtml(entry.message)}</div>
                 </div>
             `);
 
