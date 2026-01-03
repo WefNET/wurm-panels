@@ -114,12 +114,68 @@
             color: #666;
             font-style: italic;
         }
+
+        body.dark-mode {
+            color: #e2e8f0;
+        }
+
+        body.dark-mode .titlebar {
+            background: rgba(15, 23, 42, 0.9);
+            color: #f8fafc;
+        }
+
+        body.dark-mode .window-button {
+            border-color: rgba(226, 232, 240, 0.35);
+            color: #f8fafc;
+        }
+
+        body.dark-mode .window-button:hover {
+            background: rgba(148, 163, 184, 0.3);
+        }
+
+        body.dark-mode #skills-container {
+            background: rgba(15, 23, 42, 0.78);
+            border-radius: 0 0 10px 10px;
+        }
+
+        body.dark-mode .skills-table {
+            background-color: rgba(15, 23, 42, 0.92);
+            box-shadow: none;
+        }
+
+        body.dark-mode .skills-table th,
+        body.dark-mode .skills-table td {
+            border-color: rgba(148, 163, 184, 0.25);
+            color: #e2e8f0;
+            background-color: transparent;
+        }
+
+        body.dark-mode .skills-table th {
+            background-color: rgba(30, 41, 59, 0.85);
+        }
+
+        body.dark-mode .skills-table th.sortable::after {
+            color: #cbd5f5;
+        }
+
+        body.dark-mode .skills-table tr:nth-child(even) {
+            background-color: rgba(30, 41, 59, 0.6);
+        }
+
+        body.dark-mode .skills-table tr:hover {
+            background-color: rgba(59, 130, 246, 0.35);
+        }
+
+        body.dark-mode .no-data {
+            color: #cbd5f5;
+        }
     </style>
 </head>
 <body>
     <div class="titlebar" data-tauri-drag-region>
         <span class="title-text">Wurm Skills Tracker</span>
         <div class="window-actions">
+            <button id="theme-toggle" class="window-button" data-tauri-drag-region="false" aria-label="Toggle skills theme">Dark Mode</button>
             <button id="close-button" class="window-button" data-tauri-drag-region="false" aria-label="Close skills window">Close</button>
         </div>
     </div>
@@ -143,11 +199,13 @@
 
     <script>
         const closeButton = document.getElementById('close-button');
+        const themeToggleButton = document.getElementById('theme-toggle');
         const tauriWindow = window.__TAURI__?.window;
         const WINDOW_WIDTH = 600;
         const MIN_HEIGHT = 140;
         const MAX_HEIGHT = 300;
         let adjustHandle = null;
+        const THEME_STORAGE_KEY = 'skills-theme';
 
         async function closeCurrentWindow() {
             if (!tauriWindow) {
@@ -185,6 +243,27 @@
         if (closeButton) {
             closeButton.addEventListener('click', () => {
                 void closeCurrentWindow();
+            });
+        }
+
+        function applyTheme(theme) {
+            const isDark = theme === 'dark';
+            document.body.classList.toggle('dark-mode', isDark);
+            if (themeToggleButton) {
+                themeToggleButton.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+            }
+            try {
+                window.localStorage?.setItem?.(THEME_STORAGE_KEY, isDark ? 'dark' : 'light');
+            } catch (_) {
+                /* ignore storage errors */
+            }
+            scheduleAdjust();
+        }
+
+        if (themeToggleButton) {
+            themeToggleButton.addEventListener('click', () => {
+                const isDark = document.body.classList.contains('dark-mode');
+                applyTheme(isDark ? 'light' : 'dark');
             });
         }
 
@@ -349,6 +428,19 @@
                 console.error('Failed to load initial skill data:', error);
             }
         }
+
+        (function initializeTheme() {
+            try {
+                const stored = window.localStorage?.getItem?.(THEME_STORAGE_KEY);
+                if (stored === 'dark') {
+                    applyTheme('dark');
+                    return;
+                }
+            } catch (_) {
+                /* ignore */
+            }
+            applyTheme('light');
+        })();
 
         void requestInitialSkillData();
         updateSortIndicators();
