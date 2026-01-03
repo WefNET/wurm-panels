@@ -201,7 +201,7 @@
         const closeButton = document.getElementById('close-button');
         const themeToggleButton = document.getElementById('theme-toggle');
         const tauriWindow = window.__TAURI__?.window;
-        const WINDOW_WIDTH = 600;
+        const DEFAULT_WIDTH = 600;
         const MIN_HEIGHT = 140;
         const MAX_HEIGHT = 300;
         let adjustHandle = null;
@@ -290,6 +290,10 @@
                 return;
             }
 
+            const currentSize = await currentWindow.innerSize?.();
+            const LogicalSize = tauriWindow.LogicalSize;
+            const currentWidth = currentSize?.width ?? DEFAULT_WIDTH;
+
             const titlebar = document.querySelector('.titlebar');
             const container = document.getElementById('skills-container');
             const titleHeight = titlebar?.offsetHeight ?? 0;
@@ -299,12 +303,11 @@
                 Math.max(MIN_HEIGHT, titleHeight + contentHeight)
             );
 
-            const LogicalSize = tauriWindow.LogicalSize;
             try {
                 if (typeof LogicalSize === 'function') {
-                    await currentWindow.setSize(new LogicalSize(WINDOW_WIDTH, targetHeight));
+                    await currentWindow.setSize(new LogicalSize(currentWidth, targetHeight));
                 } else {
-                    await currentWindow.setSize({ width: WINDOW_WIDTH, height: targetHeight });
+                    await currentWindow.setSize({ width: currentWidth, height: targetHeight });
                 }
             } catch (error) {
                 console.error('Failed to resize skills window:', error);
@@ -317,8 +320,11 @@
             }
 
             adjustHandle = requestAnimationFrame(() => {
+                const handle = adjustHandle;
                 adjustHandle = null;
-                void adjustWindowHeight();
+                void adjustWindowHeight().catch((error) => {
+                    console.error('Failed to adjust window size:', error);
+                });
             });
         }
 
