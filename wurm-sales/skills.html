@@ -184,7 +184,7 @@
             <thead>
                 <tr>
                     <th class="sortable" data-sort-column="skill_name">Skill</th>
-                    <th class="sortable" data-sort-column="start_level">Start Level</th>
+                    <th class="sortable" data-sort-column="current_level">Current Level</th>
                     <th class="sortable" data-sort-column="session_gain">Session Gain</th>
                     <th class="sortable" data-sort-column="last_gain">Last Gain</th>
                 </tr>
@@ -333,8 +333,12 @@
                     return directionFactor * a.skill_name.localeCompare(b.skill_name);
                 }
 
-                const left = a[column];
-                const right = b[column];
+                const left = column === 'current_level'
+                    ? (typeof a.current_level === 'number' ? a.current_level : a.start_level ?? 0)
+                    : a[column];
+                const right = column === 'current_level'
+                    ? (typeof b.current_level === 'number' ? b.current_level : b.start_level ?? 0)
+                    : b[column];
 
                 if (left === right) {
                     return a.skill_name.localeCompare(b.skill_name);
@@ -376,9 +380,11 @@
 
             for (const skill of sortedSkills) {
                 const row = document.createElement('tr');
+                const currentLevel =
+                    typeof skill.current_level === 'number' ? skill.current_level : skill.start_level ?? 0;
                 row.innerHTML = `
                     <td>${escapeHtml(skill.skill_name)}</td>
-                    <td>${skill.start_level.toFixed(4)}</td>
+                    <td>${currentLevel.toFixed(4)}</td>
                     <td>+${skill.session_gain.toFixed(4)}</td>
                     <td>+${skill.last_gain.toFixed(4)}</td>
                 `;

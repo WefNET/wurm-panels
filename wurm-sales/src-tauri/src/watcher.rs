@@ -263,10 +263,12 @@ impl DirectoryWatcher {
                     .or_insert_with(|| SkillSessionData {
                         skill_name: skill_name.clone(),
                         start_level: current_level - gain,
+                        current_level,
                         session_gain: 0.0,
                         last_gain: 0.0,
                     });
 
+                entry.current_level = current_level;
                 entry.session_gain = current_level - entry.start_level;
                 entry.last_gain = gain;
 

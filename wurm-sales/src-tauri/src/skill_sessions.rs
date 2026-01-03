@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex};
 pub struct SkillSessionData {
     pub skill_name: String,
     pub start_level: f64,
+    pub current_level: f64,
     pub session_gain: f64,
     pub last_gain: f64,
 }
