@@ -71,7 +71,9 @@ impl DirectoryWatcher {
                     if let Ok(mut sessions) = skill_sessions.lock() {
                         sessions.clear();
                     }
-                    if let Err(err) = app_handle.emit("skill-sessions", Vec::<SkillSessionData>::new()) {
+                    if let Err(err) =
+                        app_handle.emit("skill-sessions", Vec::<SkillSessionData>::new())
+                    {
                         println!("Failed to emit skill session reset: {:?}", err);
                     }
                     if let Err(err) = app_handle.emit("trade-entries", Vec::<TradeEntry>::new()) {
@@ -104,7 +106,8 @@ impl DirectoryWatcher {
                 if let Ok(mut sessions) = skill_sessions.lock() {
                     sessions.clear();
                 }
-                if let Err(err) = app_handle.emit("skill-sessions", Vec::<SkillSessionData>::new()) {
+                if let Err(err) = app_handle.emit("skill-sessions", Vec::<SkillSessionData>::new())
+                {
                     println!("Failed to emit skill session reset: {:?}", err);
                 }
                 if let Ok(mut trades) = trade_entries.lock() {
@@ -258,15 +261,16 @@ impl DirectoryWatcher {
     ) {
         if let Some((skill_name, gain, current_level)) = parse_skill_gain(last_line) {
             if let Ok(mut sessions) = skill_sessions.lock() {
-                let entry = sessions
-                    .entry(skill_name.clone())
-                    .or_insert_with(|| SkillSessionData {
-                        skill_name: skill_name.clone(),
-                        start_level: current_level - gain,
-                        current_level,
-                        session_gain: 0.0,
-                        last_gain: 0.0,
-                    });
+                let entry =
+                    sessions
+                        .entry(skill_name.clone())
+                        .or_insert_with(|| SkillSessionData {
+                            skill_name: skill_name.clone(),
+                            start_level: current_level - gain,
+                            current_level,
+                            session_gain: 0.0,
+                            last_gain: 0.0,
+                        });
 
                 entry.current_level = current_level;
                 entry.session_gain = current_level - entry.start_level;
@@ -274,26 +278,18 @@ impl DirectoryWatcher {
 
                 println!(
                     "--- SKILL GAIN --- {}: +{:.4} (session: +{:.4})",
-                    skill_name,
-                    gain,
-                    entry.session_gain
+                    skill_name, gain, entry.session_gain
                 );
 
                 let session_data_vec: Vec<SkillSessionData> = sessions.values().cloned().collect();
                 drop(sessions);
 
                 if let Err(err) = app_handle.emit("skill-sessions", session_data_vec.clone()) {
-                    println!(
-                        "Failed to emit skill sessions to main window: {:?}",
-                        err
-                    );
+                    println!("Failed to emit skill sessions to main window: {:?}", err);
                 }
                 if let Err(err) = app_handle.emit_to("skills", "skill-sessions", session_data_vec) {
                     if !matches!(err, tauri::Error::WebviewNotFound) {
-                        println!(
-                            "Failed to emit skill sessions to skills window: {:?}",
-                            err
-                        );
+                        println!("Failed to emit skill sessions to skills window: {:?}", err);
                     }
                 }
             }

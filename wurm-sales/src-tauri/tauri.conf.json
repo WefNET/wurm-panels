@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "wurm-sales",
+        "title": "wurm-panels",
         "width": 800,
         "height": 600
       }

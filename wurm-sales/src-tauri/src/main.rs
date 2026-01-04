@@ -2,21 +2,33 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod app_settings;
+mod auth_client;
 mod skill_sessions;
 mod trade_entries;
 mod watcher;
 
-use app_settings::{load_settings_from_disk, new_shared as new_settings_store, persist_settings, AppSettings, SharedSettings};
+use app_settings::{
+    load_settings_from_disk, new_shared as new_settings_store, persist_settings, AppSettings,
+    SharedSettings,
+};
+use auth_client::{AuthApiClient, VerifiedSession};
 use serde::Deserialize;
 use skill_sessions::{new_store as new_skill_session_store, SharedSkillSessions, SkillSessionData};
-use trade_entries::{new_store as new_trade_store, SharedTradeEntries, TradeEntry};
+use std::env;
 use std::sync::Arc;
 use tauri::{Emitter, Manager};
+use trade_entries::{new_store as new_trade_store, SharedTradeEntries, TradeEntry};
+use url::Url;
 use watcher::DirectoryWatcher;
 
 #[derive(Deserialize)]
 struct UpdateSettingsPayload {
     watch_dir: String,
+}
+
+#[derive(Deserialize)]
+struct VerifySessionPayload {
+    token: String,
 }
 
 #[tauri::command]
@@ -106,7 +118,9 @@ async fn open_settings_window(
 }
 
 #[tauri::command]
-async fn get_settings(settings_state: tauri::State<'_, SharedSettings>) -> Result<AppSettings, String> {
+async fn get_settings(
+    settings_state: tauri::State<'_, SharedSettings>,
+) -> Result<AppSettings, String> {
     let settings = settings_state
         .lock()
         .map_err(|e| format!("Failed to access settings: {}", e))?;
@@ -168,6 +182,22 @@ async fn get_trade_entries(
 }
 
 #[tauri::command]
+async fn verify_session(
+    auth_client: tauri::State<'_, AuthApiClient>,
+    payload: VerifySessionPayload,
+) -> Result<VerifiedSession, String> {
+    let token = payload.token.trim();
+    if token.is_empty() {
+        return Err("Session token is required".to_string());
+    }
+
+    auth_client
+        .verify_session(token)
+        .await
+        .map_err(|err| err.to_string())
+}
+
+#[tauri::command]
 async fn update_settings(
     app: tauri::AppHandle,
     settings_state: tauri::State<'_, SharedSettings>,
@@ -209,12 +239,18 @@ fn main() {
     let settings = new_settings_store(load_settings_from_disk());
     let settings_for_thread = Arc::clone(&settings);
 
+    let auth_api_base =
+        env::var("AUTH_API_BASE_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
+    let auth_api_url = Url::parse(&auth_api_base).expect("AUTH_API_BASE_URL must be a valid URL");
+    let auth_client = AuthApiClient::new(auth_api_url);
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .manage(Arc::clone(&skill_sessions))
         .manage(Arc::clone(&trade_entries))
         .manage(Arc::clone(&settings))
+        .manage(auth_client)
         .invoke_handler(tauri::generate_handler![
             open_skills_window,
             open_settings_window,
@@ -222,6 +258,7 @@ fn main() {
             get_settings,
             get_skill_sessions,
             get_trade_entries,
+            verify_session,
             update_settings
         ])
         .setup(move |app| {
