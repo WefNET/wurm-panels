@@ -3,6 +3,7 @@
 
 mod app_settings;
 mod auth_client;
+mod granger;
 mod skill_sessions;
 mod trade_entries;
 mod watcher;
@@ -12,6 +13,7 @@ use app_settings::{
     SharedSettings,
 };
 use auth_client::{AuthApiClient, VerifiedSession};
+use granger::{new_store as new_granger_store, GrangerAnimal, SharedGrangerEntries};
 use serde::Deserialize;
 use skill_sessions::{new_store as new_skill_session_store, SharedSkillSessions, SkillSessionData};
 use std::env;
@@ -182,6 +184,56 @@ async fn get_trade_entries(
 }
 
 #[tauri::command]
+async fn open_granger_window(
+    app: tauri::AppHandle,
+    granger_state: tauri::State<'_, SharedGrangerEntries>,
+) -> Result<(), String> {
+    let snapshot = {
+        let entries = granger_state
+            .lock()
+            .map_err(|e| format!("Failed to access granger entries: {}", e))?;
+        entries.values().cloned().collect::<Vec<GrangerAnimal>>()
+    };
+
+    if let Some(existing) = app.get_webview_window("granger") {
+        let _ = existing.show();
+        let _ = existing.emit("granger-entries", snapshot);
+        return Ok(());
+    }
+
+    let url = tauri::WebviewUrl::App("granger.html".into());
+
+    match tauri::webview::WebviewWindowBuilder::new(&app, "granger", url)
+        .title("Granger Panel")
+        .inner_size(640.0, 420.0)
+        .min_inner_size(460.0, 280.0)
+        .resizable(true)
+        .decorations(false)
+        .shadow(false)
+        .build()
+    {
+        Ok(window) => {
+            let _ = window.emit("granger-entries", snapshot);
+            Ok(())
+        }
+        Err(err) => {
+            println!("Failed to create granger window: {:?}", err);
+            Err(format!("Failed to create granger window: {:?}", err))
+        }
+    }
+}
+
+#[tauri::command]
+async fn get_granger_entries(
+    granger_state: tauri::State<'_, SharedGrangerEntries>,
+) -> Result<Vec<GrangerAnimal>, String> {
+    let entries = granger_state
+        .lock()
+        .map_err(|e| format!("Failed to access granger entries: {}", e))?;
+    Ok(entries.values().cloned().collect())
+}
+
+#[tauri::command]
 async fn verify_session(
     auth_client: tauri::State<'_, AuthApiClient>,
     payload: VerifySessionPayload,
@@ -236,6 +288,9 @@ fn main() {
     let trade_entries = new_trade_store();
     let trade_entries_for_thread = Arc::clone(&trade_entries);
 
+    let granger_entries = new_granger_store();
+    let granger_entries_for_thread = Arc::clone(&granger_entries);
+
     let settings = new_settings_store(load_settings_from_disk());
     let settings_for_thread = Arc::clone(&settings);
 
@@ -249,15 +304,18 @@ fn main() {
         .plugin(tauri_plugin_opener::init())
         .manage(Arc::clone(&skill_sessions))
         .manage(Arc::clone(&trade_entries))
+        .manage(Arc::clone(&granger_entries))
         .manage(Arc::clone(&settings))
         .manage(auth_client)
         .invoke_handler(tauri::generate_handler![
             open_skills_window,
             open_settings_window,
             open_trade_window,
+            open_granger_window,
             get_settings,
             get_skill_sessions,
             get_trade_entries,
+            get_granger_entries,
             verify_session,
             update_settings
         ])
@@ -267,6 +325,7 @@ fn main() {
                 Arc::clone(&settings_for_thread),
                 Arc::clone(&skill_sessions_for_thread),
                 Arc::clone(&trade_entries_for_thread),
+                Arc::clone(&granger_entries_for_thread),
             )
             .start();
 

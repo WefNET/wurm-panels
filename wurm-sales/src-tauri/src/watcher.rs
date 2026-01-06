@@ -1,4 +1,5 @@
 use crate::app_settings::SharedSettings;
+use crate::granger::{to_vec as granger_to_vec, GrangerAnimal, SharedGrangerEntries};
 use crate::skill_sessions::{SharedSkillSessions, SkillSessionData};
 use crate::trade_entries::{truncate_entries, SharedTradeEntries, TradeEntry};
 use serde::Serialize;
@@ -14,6 +15,7 @@ pub struct DirectoryWatcher {
     skill_sessions: SharedSkillSessions,
     settings: SharedSettings,
     trade_entries: SharedTradeEntries,
+    granger_entries: SharedGrangerEntries,
     poll_interval: Duration,
 }
 
@@ -23,12 +25,14 @@ impl DirectoryWatcher {
         settings: SharedSettings,
         skill_sessions: SharedSkillSessions,
         trade_entries: SharedTradeEntries,
+        granger_entries: SharedGrangerEntries,
     ) -> Self {
         Self {
             app_handle,
             skill_sessions,
             settings,
             trade_entries,
+            granger_entries,
             poll_interval: Duration::from_millis(500),
         }
     }
@@ -43,12 +47,14 @@ impl DirectoryWatcher {
             skill_sessions,
             settings,
             trade_entries,
+            granger_entries,
             poll_interval,
         } = self;
 
         let mut file_line_counts: HashMap<String, usize> = HashMap::new();
         let mut active_watch_dir = String::new();
         let mut logged_read_failures: HashSet<String> = HashSet::new();
+        let mut granger_sessions: HashMap<String, PendingGrangerSession> = HashMap::new();
 
         loop {
             let current_watch_dir = match settings.lock() {
@@ -68,6 +74,7 @@ impl DirectoryWatcher {
                     active_watch_dir.clear();
                     file_line_counts.clear();
                     logged_read_failures.clear();
+                    granger_sessions.clear();
                     if let Ok(mut sessions) = skill_sessions.lock() {
                         sessions.clear();
                     }
@@ -78,6 +85,14 @@ impl DirectoryWatcher {
                     }
                     if let Err(err) = app_handle.emit("trade-entries", Vec::<TradeEntry>::new()) {
                         println!("Failed to emit trade entry reset: {:?}", err);
+                    }
+                    if let Ok(mut granger) = granger_entries.lock() {
+                        granger.clear();
+                    }
+                    if let Err(err) =
+                        app_handle.emit("granger-entries", Vec::<GrangerAnimal>::new())
+                    {
+                        println!("Failed to emit granger reset: {:?}", err);
                     }
                 }
                 thread::sleep(poll_interval);
@@ -116,6 +131,13 @@ impl DirectoryWatcher {
                 if let Err(err) = app_handle.emit("trade-entries", Vec::<TradeEntry>::new()) {
                     println!("Failed to emit trade entry reset: {:?}", err);
                 }
+                if let Ok(mut granger) = granger_entries.lock() {
+                    granger.clear();
+                }
+                if let Err(err) = app_handle.emit("granger-entries", Vec::<GrangerAnimal>::new()) {
+                    println!("Failed to emit granger reset: {:?}", err);
+                }
+                granger_sessions.clear();
             }
 
             if active_watch_dir.is_empty() {
@@ -127,9 +149,11 @@ impl DirectoryWatcher {
                 &app_handle,
                 &skill_sessions,
                 &trade_entries,
+                &granger_entries,
                 &active_watch_dir,
                 &mut file_line_counts,
                 &mut logged_read_failures,
+                &mut granger_sessions,
             ) {
                 println!(
                     "Failed to read watch directory {}: {}",
@@ -177,9 +201,11 @@ impl DirectoryWatcher {
         app_handle: &AppHandle,
         skill_sessions: &SharedSkillSessions,
         trade_entries: &SharedTradeEntries,
+        granger_entries: &SharedGrangerEntries,
         watch_dir: &str,
         file_line_counts: &mut HashMap<String, usize>,
         logged_read_failures: &mut HashSet<String>,
+        granger_sessions: &mut HashMap<String, PendingGrangerSession>,
     ) -> Result<(), String> {
         let entries = fs::read_dir(watch_dir).map_err(|err| err.to_string())?;
 
@@ -226,6 +252,8 @@ impl DirectoryWatcher {
                         app_handle,
                         skill_sessions,
                         trade_entries,
+                        granger_entries,
+                        granger_sessions,
                         &path_str,
                         &chat_type,
                         trimmed_line,
@@ -243,6 +271,8 @@ impl DirectoryWatcher {
         app_handle: &AppHandle,
         skill_sessions: &SharedSkillSessions,
         trade_entries: &SharedTradeEntries,
+        granger_entries: &SharedGrangerEntries,
+        granger_sessions: &mut HashMap<String, PendingGrangerSession>,
         path: &str,
         chat_type: &str,
         last_line: &str,
@@ -251,6 +281,14 @@ impl DirectoryWatcher {
 
         Self::handle_skill_gain(app_handle, skill_sessions, last_line);
         Self::handle_trade_message(app_handle, trade_entries, last_line);
+        Self::handle_granger_message(
+            app_handle,
+            granger_entries,
+            granger_sessions,
+            path,
+            chat_type,
+            last_line,
+        );
         Self::emit_file_change(app_handle, path, chat_type, last_line);
     }
 
@@ -327,6 +365,62 @@ impl DirectoryWatcher {
             }
         }
     }
+
+    fn handle_granger_message(
+        app_handle: &AppHandle,
+        granger_entries: &SharedGrangerEntries,
+        granger_sessions: &mut HashMap<String, PendingGrangerSession>,
+        path: &str,
+        chat_type: &str,
+        line: &str,
+    ) {
+        if !chat_type.eq_ignore_ascii_case("event") {
+            return;
+        }
+
+        if let Some(session) = PendingGrangerSession::from_smile_line(line) {
+            if let Some(previous) = granger_sessions.remove(path) {
+                Self::finalize_granger_session(app_handle, granger_entries, previous);
+            }
+            granger_sessions.insert(path.to_string(), session);
+            return;
+        }
+
+        if let Some(active) = granger_sessions.get_mut(path) {
+            active.absorb_line(line);
+            if active.is_ready() {
+                if let Some(session) = granger_sessions.remove(path) {
+                    Self::finalize_granger_session(app_handle, granger_entries, session);
+                }
+            }
+        }
+    }
+
+    fn finalize_granger_session(
+        app_handle: &AppHandle,
+        granger_entries: &SharedGrangerEntries,
+        session: PendingGrangerSession,
+    ) {
+        if let Some(animal) = session.into_animal() {
+            if let Ok(mut entries) = granger_entries.lock() {
+                entries.insert(animal.id.clone(), animal.clone());
+                let snapshot = granger_to_vec(&entries);
+                drop(entries);
+
+                if let Err(err) = app_handle.emit("granger-entries", snapshot.clone()) {
+                    println!("Failed to emit granger entries: {:?}", err);
+                }
+                if let Err(err) = app_handle.emit_to("granger", "granger-entries", snapshot) {
+                    if !matches!(err, tauri::Error::WebviewNotFound) {
+                        println!(
+                            "Failed to emit granger entries to granger window: {:?}",
+                            err
+                        );
+                    }
+                }
+            }
+        }
+    }
 }
 
 #[derive(Clone, Serialize)]
@@ -334,6 +428,161 @@ struct FileChangeEvent {
     path: String,
     line: String,
     chat_type: String,
+}
+
+#[derive(Debug, Clone)]
+struct PendingGrangerSession {
+    timestamp: String,
+    name: Option<String>,
+    descriptors: Vec<String>,
+    species: Option<String>,
+    settlement: Option<String>,
+    caretaker: Option<String>,
+    condition: Option<String>,
+    traits: Vec<String>,
+    trait_points: Option<u32>,
+    colour: Option<String>,
+    raw_lines: Vec<String>,
+}
+
+impl PendingGrangerSession {
+    fn from_smile_line(line: &str) -> Option<Self> {
+        let timestamp = extract_timestamp(line).unwrap_or_else(|| "".to_string());
+        let content = strip_timestamp_prefix(line);
+
+        if !content.starts_with("You smile at") {
+            return None;
+        }
+
+        let mut remainder = content["You smile at".len()..]
+            .trim()
+            .trim_end_matches('.')
+            .to_string();
+
+        if remainder.is_empty() {
+            return None;
+        }
+
+        if let Some(stripped) = remainder.strip_prefix("the ") {
+            remainder = stripped.to_string();
+        }
+
+        let mut words: Vec<&str> = remainder.split_whitespace().collect();
+        if words.is_empty() {
+            return None;
+        }
+
+        let name = words.pop().map(|value| value.to_string());
+        let descriptors = words
+            .into_iter()
+            .map(|word| word.trim_matches(',').to_string())
+            .collect();
+
+        Some(Self {
+            timestamp,
+            name,
+            descriptors,
+            species: None,
+            settlement: None,
+            caretaker: None,
+            condition: None,
+            traits: Vec::new(),
+            trait_points: None,
+            colour: None,
+            raw_lines: vec![content.to_string()],
+        })
+    }
+
+    fn absorb_line(&mut self, line: &str) {
+        let content = strip_timestamp_prefix(line);
+        self.raw_lines.push(content.to_string());
+
+        if self.species.is_none() && content.contains(" like this one") {
+            if let Some(first_word) = content.split_whitespace().next() {
+                let species = first_word.trim_matches(|c: char| c == '.' || c == ',');
+                if !species.is_empty() {
+                    self.species = Some(species.trim_end_matches('.').to_string());
+                }
+            }
+        }
+
+        if self.settlement.is_none() && content.contains("settlement of ") {
+            if let Some(after) = content.split("settlement of ").nth(1) {
+                let settlement = after.trim().trim_end_matches('.');
+                if !settlement.is_empty() {
+                    self.settlement = Some(settlement.to_string());
+                }
+            }
+        }
+
+        if self.caretaker.is_none() && content.contains("taken care of by") {
+            if let Some(after) = content.split("by ").nth(1) {
+                let caretaker = after.trim().trim_end_matches('.');
+                if !caretaker.is_empty() {
+                    self.caretaker = Some(caretaker.to_string());
+                }
+            }
+        }
+
+        if self.condition.is_none()
+            && (content.starts_with("He is")
+                || content.starts_with("She is")
+                || content.starts_with("It is"))
+        {
+            if !content.contains("trait points") && !content.contains("colour is") {
+                self.condition = Some(content.to_string());
+            }
+        }
+
+        if content.contains("trait points") {
+            if let Some(value) = extract_number(content) {
+                self.trait_points = Some(value);
+            }
+        } else {
+            for trait_text in split_trait_sentences(content) {
+                if self
+                    .traits
+                    .iter()
+                    .any(|existing| existing.eq_ignore_ascii_case(&trait_text))
+                {
+                    continue;
+                }
+                self.traits.push(trait_text);
+            }
+        }
+
+        if self.colour.is_none() && content.contains("colour is") {
+            if let Some(after) = content.split("colour is").nth(1) {
+                let colour = after.trim().trim_end_matches('.');
+                if !colour.is_empty() {
+                    self.colour = Some(colour.to_string());
+                }
+            }
+        }
+    }
+
+    fn is_ready(&self) -> bool {
+        self.colour.is_some()
+    }
+
+    fn into_animal(self) -> Option<GrangerAnimal> {
+        let name = self.name?;
+        let id = name.clone();
+
+        Some(GrangerAnimal {
+            id,
+            name,
+            descriptors: self.descriptors,
+            species: self.species,
+            settlement: self.settlement,
+            caretaker: self.caretaker,
+            condition: self.condition,
+            traits: self.traits,
+            trait_points: self.trait_points,
+            colour: self.colour,
+            updated_at: self.timestamp,
+        })
+    }
 }
 
 fn get_chat_type(path_str: &str) -> String {
@@ -365,6 +614,60 @@ fn get_chat_type(path_str: &str) -> String {
         }
     }
     "unknown".to_string()
+}
+
+fn strip_timestamp_prefix(line: &str) -> &str {
+    if line.starts_with('[') {
+        if let Some(index) = line.find("] ") {
+            return &line[index + 2..];
+        }
+    }
+    line
+}
+
+fn extract_timestamp(line: &str) -> Option<String> {
+    if line.starts_with('[') {
+        if let Some(index) = line.find(']') {
+            return Some(line[1..index].to_string());
+        }
+    }
+    None
+}
+
+fn extract_number(line: &str) -> Option<u32> {
+    let digits: String = line.chars().filter(|c| c.is_ascii_digit()).collect();
+    if digits.is_empty() {
+        None
+    } else {
+        digits.parse().ok()
+    }
+}
+
+fn split_trait_sentences(line: &str) -> Vec<String> {
+    line.split('.')
+        .map(|part| part.trim())
+        .filter(|part| !part.is_empty())
+        .filter_map(|sentence| {
+            if !(sentence.starts_with("It has")
+                || sentence.starts_with("He has")
+                || sentence.starts_with("She has"))
+            {
+                return None;
+            }
+
+            let lowered = sentence.to_ascii_lowercase();
+            if lowered.contains("trait points") || lowered.contains("has been") {
+                return None;
+            }
+
+            let fragment = sentence.splitn(2, " has ").nth(1)?.trim();
+            if fragment.is_empty() {
+                None
+            } else {
+                Some(fragment.to_string())
+            }
+        })
+        .collect()
 }
 
 fn parse_skill_gain(line: &str) -> Option<(String, f64, f64)> {

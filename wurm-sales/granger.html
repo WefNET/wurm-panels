@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Granger Panel</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+            background-color: #111827;
+            color: #f8fafc;
+        }
+
+        .titlebar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(15, 23, 42, 0.95);
+            -webkit-app-region: drag;
+        }
+
+        .titlebar h1 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .window-actions {
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+
+        .window-button {
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            background: transparent;
+            color: #e2e8f0;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .window-button:hover {
+            background: rgba(148, 163, 184, 0.25);
+        }
+
+        main {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .summary {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: #cbd5f5;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            background: rgba(30, 41, 59, 0.85);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        thead {
+            background: rgba(248, 250, 252, 0.05);
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        th {
+            font-weight: 600;
+            font-size: 11px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        tbody tr:nth-child(even) {
+            background: rgba(15, 23, 42, 0.35);
+        }
+
+        tbody tr:hover {
+            background: rgba(59, 130, 246, 0.25);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 24px;
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(59, 130, 246, 0.2);
+            color: #bfdbfe;
+            margin-right: 6px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="titlebar" data-tauri-drag-region>
+        <h1>Granger Panel</h1>
+        <div class="window-actions">
+            <button id="refresh-button" class="window-button" aria-label="Refresh animals">Refresh</button>
+            <button id="close-button" class="window-button" aria-label="Close granger window">Close</button>
+        </div>
+    </div>
+    <main>
+        <div class="summary" id="summary"></div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Traits</th>
+                        <th>Condition</th>
+                        <th>Settlement</th>
+                        <th>Caretaker</th>
+                        <th>Colour</th>
+                        <th>Last Updated</th>
+                    </tr>
+                </thead>
+                <tbody id="granger-tbody">
+                    <tr><td colspan="7" class="no-data">No animals registered yet. Examine livestock to populate the panel.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        const { event, core, window: tauriWindow } = window.__TAURI__ || {};
+        const summaryElement = document.getElementById('summary');
+        const tbody = document.getElementById('granger-tbody');
+        const closeButton = document.getElementById('close-button');
+        const refreshButton = document.getElementById('refresh-button');
+        let cachedAnimals = [];
+
+        async function closeWindow() {
+            if (!tauriWindow?.getCurrent) {
+                return;
+            }
+            try {
+                const current = tauriWindow.getCurrent();
+                await current.close();
+            } catch (error) {
+                console.error('Failed to close granger window:', error);
+            }
+        }
+
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                void closeWindow();
+            });
+        }
+
+        if (refreshButton) {
+            refreshButton.addEventListener('click', () => {
+                void loadAnimals();
+            });
+        }
+
+        function renderSummary(animals) {
+            if (!summaryElement) {
+                return;
+            }
+            if (!animals.length) {
+                summaryElement.textContent = 'Registered animals: 0';
+                return;
+            }
+
+            const uniqueSettlements = new Set();
+            const uniqueCaretakers = new Set();
+            for (const animal of animals) {
+                if (animal.settlement) {
+                    uniqueSettlements.add(animal.settlement);
+                }
+                if (animal.caretaker) {
+                    uniqueCaretakers.add(animal.caretaker);
+                }
+            }
+
+            summaryElement.textContent = `Registered animals: ${animals.length} · Settlements: ${uniqueSettlements.size} · Caretakers: ${uniqueCaretakers.size}`;
+        }
+
+        function createTraitChips(traits) {
+            if (!Array.isArray(traits) || !traits.length) {
+                return '<span class="chip" style="background: rgba(100,116,139,0.35); color: #e2e8f0;">—</span>';
+            }
+            return traits
+                .map((trait) => `<span class="chip">${escapeHtml(trait)}</span>`)
+                .join('');
+        }
+
+        function escapeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = String(value ?? '');
+            return div.innerHTML;
+        }
+
+        function renderAnimals(animals) {
+            if (!tbody) {
+                return;
+            }
+
+            if (!animals.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="no-data">No animals registered yet. Examine livestock to populate the panel.</td></tr>';
+                renderSummary([]);
+                return;
+            }
+
+            tbody.innerHTML = '';
+            const sorted = animals.slice().sort((a, b) => a.name.localeCompare(b.name));
+
+            for (const animal of sorted) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${escapeHtml(animal.name)}</td>
+                    <td>${createTraitChips(animal.traits)}</td>
+                    <td>${escapeHtml(animal.condition ?? '—')}</td>
+                    <td>${escapeHtml(animal.settlement ?? '—')}</td>
+                    <td>${escapeHtml(animal.caretaker ?? '—')}</td>
+                    <td>${escapeHtml(animal.colour ?? '—')}</td>
+                    <td>${escapeHtml(animal.updated_at ?? '')}</td>
+                `;
+                tbody.appendChild(row);
+            }
+
+            renderSummary(sorted);
+        }
+
+        async function loadAnimals() {
+            try {
+                const animals = await core.invoke('get_granger_entries');
+                cachedAnimals = Array.isArray(animals) ? animals : [];
+                renderAnimals(cachedAnimals);
+            } catch (error) {
+                console.error('Failed to fetch granger entries:', error);
+            }
+        }
+
+        if (event?.listen) {
+            void event.listen('granger-entries', (payload) => {
+                const animals = payload?.payload ?? [];
+                cachedAnimals = Array.isArray(animals) ? animals : [];
+                renderAnimals(cachedAnimals);
+            });
+        }
+
+        void loadAnimals();
+    </script>
+</body>
+</html>

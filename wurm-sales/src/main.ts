@@ -111,6 +111,18 @@ function updateWatchDirDisplay(value: string) {
 controls.appendChild(openSkillsButton);
 controls.appendChild(openTradeButton);
 controls.appendChild(openSettingsButton);
+const openGrangerButton = document.createElement('button');
+openGrangerButton.textContent = 'Open Granger Panel';
+openGrangerButton.style.cssText = buttonStyle;
+openGrangerButton.style.backgroundColor = '#FF7043';
+openGrangerButton.addEventListener('click', async () => {
+  try {
+    await invoke('open_granger_window');
+  } catch (error) {
+    console.error('Failed to open granger window:', error);
+  }
+});
+controls.appendChild(openGrangerButton);
 controls.appendChild(watchDirInfo);
 
 app.insertBefore(controls, app.firstChild);
