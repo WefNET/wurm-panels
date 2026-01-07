@@ -1,5 +1,7 @@
 use crate::app_settings::SharedSettings;
-use crate::granger::{to_vec as granger_to_vec, GrangerAnimal, SharedGrangerEntries};
+use crate::granger::{
+    persist as persist_granger, to_vec as granger_to_vec, GrangerAnimal, SharedGrangerEntries,
+};
 use crate::skill_sessions::{SharedSkillSessions, SkillSessionData};
 use crate::trade_entries::{truncate_entries, SharedTradeEntries, TradeEntry};
 use serde::Serialize;
@@ -86,14 +88,7 @@ impl DirectoryWatcher {
                     if let Err(err) = app_handle.emit("trade-entries", Vec::<TradeEntry>::new()) {
                         println!("Failed to emit trade entry reset: {:?}", err);
                     }
-                    if let Ok(mut granger) = granger_entries.lock() {
-                        granger.clear();
-                    }
-                    if let Err(err) =
-                        app_handle.emit("granger-entries", Vec::<GrangerAnimal>::new())
-                    {
-                        println!("Failed to emit granger reset: {:?}", err);
-                    }
+                    // Preserve stored Granger data when watch directory is cleared
                 }
                 thread::sleep(poll_interval);
                 continue;
@@ -131,12 +126,7 @@ impl DirectoryWatcher {
                 if let Err(err) = app_handle.emit("trade-entries", Vec::<TradeEntry>::new()) {
                     println!("Failed to emit trade entry reset: {:?}", err);
                 }
-                if let Ok(mut granger) = granger_entries.lock() {
-                    granger.clear();
-                }
-                if let Err(err) = app_handle.emit("granger-entries", Vec::<GrangerAnimal>::new()) {
-                    println!("Failed to emit granger reset: {:?}", err);
-                }
+                // Preserve stored Granger data when switching watch directories
                 granger_sessions.clear();
             }
 
@@ -404,6 +394,9 @@ impl DirectoryWatcher {
         if let Some(animal) = session.into_animal() {
             if let Ok(mut entries) = granger_entries.lock() {
                 entries.insert(animal.id.clone(), animal.clone());
+                if let Err(err) = persist_granger(&entries) {
+                    println!("Failed to persist granger data: {}", err);
+                }
                 let snapshot = granger_to_vec(&entries);
                 drop(entries);
 
@@ -435,6 +428,8 @@ struct PendingGrangerSession {
     timestamp: String,
     name: Option<String>,
     descriptors: Vec<String>,
+    age: Option<String>,
+    custom_label: Option<String>,
     species: Option<String>,
     settlement: Option<String>,
     caretaker: Option<String>,
@@ -467,21 +462,31 @@ impl PendingGrangerSession {
             remainder = stripped.to_string();
         }
 
-        let mut words: Vec<&str> = remainder.split_whitespace().collect();
+        let (custom_label, cleaned) = extract_custom_label(&remainder);
+        let mut words: Vec<&str> = cleaned.split_whitespace().collect();
         if words.is_empty() {
             return None;
         }
 
         let name = words.pop().map(|value| value.to_string());
-        let descriptors = words
+        let mut descriptors: Vec<String> = words
             .into_iter()
             .map(|word| word.trim_matches(',').to_string())
+            .filter(|value| !value.is_empty())
             .collect();
+
+        let age = if !descriptors.is_empty() {
+            Some(descriptors.remove(0))
+        } else {
+            None
+        };
 
         Some(Self {
             timestamp,
             name,
             descriptors,
+            age,
+            custom_label,
             species: None,
             settlement: None,
             caretaker: None,
@@ -573,6 +578,8 @@ impl PendingGrangerSession {
             id,
             name,
             descriptors: self.descriptors,
+            age: self.age,
+            custom_label: self.custom_label,
             species: self.species,
             settlement: self.settlement,
             caretaker: self.caretaker,
@@ -668,6 +675,63 @@ fn split_trait_sentences(line: &str) -> Vec<String> {
             }
         })
         .collect()
+}
+
+fn extract_custom_label(input: &str) -> (Option<String>, String) {
+    if let Some((label, cleaned)) = extract_label_with_delimiter(input, '\'') {
+        let label = if label.is_empty() { None } else { Some(label) };
+        return (label, cleaned);
+    }
+
+    if let Some((label, cleaned)) = extract_label_with_delimiter(input, '"') {
+        let label = if label.is_empty() { None } else { Some(label) };
+        return (label, cleaned);
+    }
+
+    (None, input.trim().to_string())
+}
+
+fn extract_label_with_delimiter(input: &str, delimiter: char) -> Option<(String, String)> {
+    let mut start = None;
+    let mut end = None;
+
+    for (idx, ch) in input.char_indices() {
+        if ch == delimiter {
+            if start.is_none() {
+                start = Some(idx);
+            } else {
+                end = Some(idx);
+                break;
+            }
+        }
+    }
+
+    let (start_idx, end_idx) = (start?, end?);
+    if end_idx <= start_idx {
+        return None;
+    }
+
+    let label = input[start_idx + delimiter.len_utf8()..end_idx]
+        .trim()
+        .to_string();
+
+    let before = input[..start_idx].trim_end();
+    let after = input[end_idx + delimiter.len_utf8()..].trim_start();
+
+    let mut cleaned = String::new();
+    if !before.is_empty() {
+        cleaned.push_str(before);
+    }
+    if !before.is_empty() && !after.is_empty() {
+        cleaned.push(' ');
+    }
+    if !after.is_empty() {
+        cleaned.push_str(after);
+    }
+
+    let cleaned = cleaned.split_whitespace().collect::<Vec<_>>().join(" ");
+
+    Some((label, cleaned))
 }
 
 fn parse_skill_gain(line: &str) -> Option<(String, f64, f64)> {

@@ -79,7 +79,8 @@
             background: rgba(248, 250, 252, 0.05);
         }
 
-        th, td {
+        th,
+        td {
             padding: 8px;
             text-align: left;
             border-bottom: 1px solid rgba(148, 163, 184, 0.2);
@@ -134,6 +135,8 @@
                 <thead>
                     <tr>
                         <th>Name</th>
+                        <th>Age</th>
+                        <th>Label</th>
                         <th>Traits</th>
                         <th>Condition</th>
                         <th>Settlement</th>
@@ -143,27 +146,62 @@
                     </tr>
                 </thead>
                 <tbody id="granger-tbody">
-                    <tr><td colspan="7" class="no-data">No animals registered yet. Examine livestock to populate the panel.</td></tr>
+                    <tr><td colspan="9" class="no-data">No animals registered yet. Examine livestock to populate the panel.</td></tr>
                 </tbody>
             </table>
         </div>
     </main>
 
     <script>
-        const { event, core, window: tauriWindow } = window.__TAURI__ || {};
         const summaryElement = document.getElementById('summary');
         const tbody = document.getElementById('granger-tbody');
         const closeButton = document.getElementById('close-button');
         const refreshButton = document.getElementById('refresh-button');
         let cachedAnimals = [];
 
+        function getWindowApi() {
+            return window.__TAURI__?.window;
+        }
+
+        function getCoreApi() {
+            return window.__TAURI__?.core;
+        }
+
+        function getEventApi() {
+            return window.__TAURI__?.event;
+        }
+
         async function closeWindow() {
-            if (!tauriWindow?.getCurrent) {
+            const tauriWindow = getWindowApi();
+            if (!tauriWindow) {
                 return;
             }
+
             try {
-                const current = tauriWindow.getCurrent();
-                await current.close();
+                if (typeof tauriWindow.getCurrent === 'function') {
+                    const current = tauriWindow.getCurrent();
+                    if (current && typeof current.close === 'function') {
+                        await current.close();
+                        return;
+                    }
+                }
+
+                if (typeof tauriWindow.getCurrentWindow === 'function') {
+                    const legacyCurrent = tauriWindow.getCurrentWindow();
+                    if (legacyCurrent && typeof legacyCurrent.close === 'function') {
+                        await legacyCurrent.close();
+                        return;
+                    }
+                }
+
+                if (tauriWindow.appWindow && typeof tauriWindow.appWindow.close === 'function') {
+                    await tauriWindow.appWindow.close();
+                    return;
+                }
+
+                if (typeof window.close === 'function') {
+                    window.close();
+                }
             } catch (error) {
                 console.error('Failed to close granger window:', error);
             }
@@ -225,7 +263,7 @@
             }
 
             if (!animals.length) {
-                tbody.innerHTML = '<tr><td colspan="7" class="no-data">No animals registered yet. Examine livestock to populate the panel.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="no-data">No animals registered yet. Examine livestock to populate the panel.</td></tr>';
                 renderSummary([]);
                 return;
             }
@@ -237,6 +275,8 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${escapeHtml(animal.name)}</td>
+                    <td>${escapeHtml(animal.age ?? '—')}</td>
+                    <td>${escapeHtml(animal.custom_label ?? '—')}</td>
                     <td>${createTraitChips(animal.traits)}</td>
                     <td>${escapeHtml(animal.condition ?? '—')}</td>
                     <td>${escapeHtml(animal.settlement ?? '—')}</td>
@@ -251,6 +291,10 @@
         }
 
         async function loadAnimals() {
+            const core = getCoreApi();
+            if (!core?.invoke) {
+                return;
+            }
             try {
                 const animals = await core.invoke('get_granger_entries');
                 cachedAnimals = Array.isArray(animals) ? animals : [];
@@ -260,15 +304,24 @@
             }
         }
 
-        if (event?.listen) {
-            void event.listen('granger-entries', (payload) => {
-                const animals = payload?.payload ?? [];
-                cachedAnimals = Array.isArray(animals) ? animals : [];
-                renderAnimals(cachedAnimals);
-            });
+        function initializeTauriBindings() {
+            const event = getEventApi();
+            if (event?.listen) {
+                void event.listen('granger-entries', (payload) => {
+                    const animals = payload?.payload ?? [];
+                    cachedAnimals = Array.isArray(animals) ? animals : [];
+                    renderAnimals(cachedAnimals);
+                });
+            }
+
+            void loadAnimals();
         }
 
-        void loadAnimals();
+        if (window.__TAURI__) {
+            initializeTauriBindings();
+        } else {
+            window.addEventListener('tauri://ready', initializeTauriBindings, { once: true });
+        }
     </script>
 </body>
 </html>

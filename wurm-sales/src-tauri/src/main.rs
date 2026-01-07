@@ -13,7 +13,10 @@ use app_settings::{
     SharedSettings,
 };
 use auth_client::{AuthApiClient, VerifiedSession};
-use granger::{new_store as new_granger_store, GrangerAnimal, SharedGrangerEntries};
+use granger::{
+    load_from_disk as load_granger_from_disk, new_store_with as new_granger_store_with,
+    GrangerAnimal, SharedGrangerEntries,
+};
 use serde::Deserialize;
 use skill_sessions::{new_store as new_skill_session_store, SharedSkillSessions, SkillSessionData};
 use std::env;
@@ -288,7 +291,7 @@ fn main() {
     let trade_entries = new_trade_store();
     let trade_entries_for_thread = Arc::clone(&trade_entries);
 
-    let granger_entries = new_granger_store();
+    let granger_entries = new_granger_store_with(load_granger_from_disk());
     let granger_entries_for_thread = Arc::clone(&granger_entries);
 
     let settings = new_settings_store(load_settings_from_disk());
