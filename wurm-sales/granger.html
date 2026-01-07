@@ -153,63 +153,34 @@
     </main>
 
     <script>
+        const { window: tauriWindow, core: tauriCore, event: tauriEvent } = window.__TAURI__;
+
         const summaryElement = document.getElementById('summary');
         const tbody = document.getElementById('granger-tbody');
         const closeButton = document.getElementById('close-button');
         const refreshButton = document.getElementById('refresh-button');
         let cachedAnimals = [];
 
-        function getWindowApi() {
-            return window.__TAURI__?.window;
-        }
-
-        function getCoreApi() {
-            return window.__TAURI__?.core;
-        }
-
-        function getEventApi() {
-            return window.__TAURI__?.event;
-        }
-
-        async function closeWindow() {
-            const tauriWindow = getWindowApi();
+        async function closeCurrentWindow() {
             if (!tauriWindow) {
+                console.error("Tauri window API not available.");
                 return;
             }
-
             try {
-                if (typeof tauriWindow.getCurrent === 'function') {
-                    const current = tauriWindow.getCurrent();
-                    if (current && typeof current.close === 'function') {
-                        await current.close();
-                        return;
-                    }
-                }
-
-                if (typeof tauriWindow.getCurrentWindow === 'function') {
-                    const legacyCurrent = tauriWindow.getCurrentWindow();
-                    if (legacyCurrent && typeof legacyCurrent.close === 'function') {
-                        await legacyCurrent.close();
-                        return;
-                    }
-                }
-
-                if (tauriWindow.appWindow && typeof tauriWindow.appWindow.close === 'function') {
-                    await tauriWindow.appWindow.close();
-                    return;
-                }
-
-                if (typeof window.close === 'function') {
-                    window.close();
-                }
+                const currentWindow = tauriWindow.getCurrent();
+                await currentWindow.close();
             } catch (error) {
                 console.error('Failed to close granger window:', error);
+                // As a last resort, try the backend command.
+                if (tauriCore?.invoke) {
+                    await tauriCore.invoke('close_granger_window').catch(e => console.error("Fallback command failed:", e));
+                }
             }
         }
 
         if (closeButton) {
             closeButton.addEventListener('click', () => {
-                void closeWindow();
+                void closeCurrentWindow();
             });
         }
 
@@ -220,24 +191,14 @@
         }
 
         function renderSummary(animals) {
-            if (!summaryElement) {
-                return;
-            }
+            if (!summaryElement) return;
             if (!animals.length) {
                 summaryElement.textContent = 'Registered animals: 0';
                 return;
             }
 
-            const uniqueSettlements = new Set();
-            const uniqueCaretakers = new Set();
-            for (const animal of animals) {
-                if (animal.settlement) {
-                    uniqueSettlements.add(animal.settlement);
-                }
-                if (animal.caretaker) {
-                    uniqueCaretakers.add(animal.caretaker);
-                }
-            }
+            const uniqueSettlements = new Set(animals.map(a => a.settlement).filter(Boolean));
+            const uniqueCaretakers = new Set(animals.map(a => a.caretaker).filter(Boolean));
 
             summaryElement.textContent = `Registered animals: ${animals.length} · Settlements: ${uniqueSettlements.size} · Caretakers: ${uniqueCaretakers.size}`;
         }
@@ -258,9 +219,7 @@
         }
 
         function renderAnimals(animals) {
-            if (!tbody) {
-                return;
-            }
+            if (!tbody) return;
 
             if (!animals.length) {
                 tbody.innerHTML = '<tr><td colspan="9" class="no-data">No animals registered yet. Examine livestock to populate the panel.</td></tr>';
@@ -291,12 +250,9 @@
         }
 
         async function loadAnimals() {
-            const core = getCoreApi();
-            if (!core?.invoke) {
-                return;
-            }
+            if (!tauriCore?.invoke) return;
             try {
-                const animals = await core.invoke('get_granger_entries');
+                const animals = await tauriCore.invoke('get_granger_entries');
                 cachedAnimals = Array.isArray(animals) ? animals : [];
                 renderAnimals(cachedAnimals);
             } catch (error) {
@@ -304,24 +260,18 @@
             }
         }
 
-        function initializeTauriBindings() {
-            const event = getEventApi();
-            if (event?.listen) {
-                void event.listen('granger-entries', (payload) => {
+        function main() {
+            if (tauriEvent?.listen) {
+                void tauriEvent.listen('granger-entries', (payload) => {
                     const animals = payload?.payload ?? [];
                     cachedAnimals = Array.isArray(animals) ? animals : [];
                     renderAnimals(cachedAnimals);
                 });
             }
-
             void loadAnimals();
         }
 
-        if (window.__TAURI__) {
-            initializeTauriBindings();
-        } else {
-            window.addEventListener('tauri://ready', initializeTauriBindings, { once: true });
-        }
+        main();
     </script>
 </body>
 </html>

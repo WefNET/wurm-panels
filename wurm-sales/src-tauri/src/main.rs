@@ -253,6 +253,16 @@ async fn verify_session(
 }
 
 #[tauri::command]
+async fn close_granger_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("granger") {
+        window
+            .close()
+            .map_err(|err| format!("Failed to close granger window: {:?}", err))?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
 async fn update_settings(
     app: tauri::AppHandle,
     settings_state: tauri::State<'_, SharedSettings>,
@@ -319,6 +329,7 @@ fn main() {
             get_skill_sessions,
             get_trade_entries,
             get_granger_entries,
+            close_granger_window,
             verify_session,
             update_settings
         ])
