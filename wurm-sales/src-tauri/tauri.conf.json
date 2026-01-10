@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "wurm-sales",
+  "productName": "wurm-panels",
   "version": "0.1.0",
-  "identifier": "com.johnw.wurm-sales",
+  "identifier": "rodeo.wurm.wurm-panels",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -18,19 +18,19 @@
   },
   "plugins": {
     "tray-icon": {
-      "iconPath": "icons/tray.png",
+      "iconPath": "icons/wurm-panels.ico",
       "iconAsTemplate": false
     }
   },
   "bundle": {
     "active": true,
     "targets": "all",
+    "resources": [
+      "icons/tray.png",
+      "icons/wurm-panels.ico"
+    ],
     "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
+      "icons/wurm-panels.ico"
     ]
   }
 }

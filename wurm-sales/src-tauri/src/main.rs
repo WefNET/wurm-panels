@@ -328,6 +328,12 @@ async fn update_settings(
         println!("Failed to emit settings update to main window: {:?}", err);
     }
 
+    if let Some(watcher_window) = app.get_webview_window("watcher") {
+        if let Err(err) = watcher_window.emit("settings-updated", updated.clone()) {
+            println!("Failed to emit settings update to watcher window: {:?}", err);
+        }
+    }
+
     if let Some(settings_window) = app.get_webview_window("settings") {
         if let Err(err) = settings_window.emit("settings-data", updated.clone()) {
             println!(

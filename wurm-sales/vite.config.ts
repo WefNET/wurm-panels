@@ -2,7 +2,6 @@ import { defineConfig } from "vite";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 
-// @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
 
@@ -35,6 +34,7 @@ export default defineConfig(async () => ({
       input: {
         main: resolve(rootDir, "index.html"),
         skills: resolve(rootDir, "skills.html"),
+        watcher: resolve(rootDir, "watcher.html"),
       },
     },
   },

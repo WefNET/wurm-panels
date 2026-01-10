@@ -325,14 +325,13 @@ impl DirectoryWatcher {
     }
 
     fn emit_file_change(app_handle: &AppHandle, path: &str, chat_type: &str, last_line: &str) {
-        if let Err(err) = app_handle.emit(
-            "file-changed",
-            FileChangeEvent {
-                path: path.to_string(),
-                line: last_line.to_string(),
-                chat_type: chat_type.to_string(),
-            },
-        ) {
+        let payload: FileChangeEvent = FileChangeEvent {
+            path: path.to_string(),
+            line: last_line.to_string(),
+            chat_type: chat_type.to_string(),
+        };
+
+        if let Err(err) = app_handle.emit("file-changed", payload) {
             println!("Failed to emit file change event: {:?}", err);
         }
     }
