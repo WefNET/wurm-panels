@@ -20,8 +20,16 @@ use granger::{
 use serde::Deserialize;
 use skill_sessions::{new_store as new_skill_session_store, SharedSkillSessions, SkillSessionData};
 use std::env;
-use std::sync::Arc;
-use tauri::{Emitter, Manager};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
+use tauri::{
+    menu::{MenuBuilder, MenuItem},
+    tray::TrayIconBuilder,
+    async_runtime,
+    Emitter, Manager,
+};
 use trade_entries::{new_store as new_trade_store, SharedTradeEntries, TradeEntry};
 use url::Url;
 use watcher::DirectoryWatcher;
@@ -237,6 +245,44 @@ async fn get_granger_entries(
 }
 
 #[tauri::command]
+async fn open_watcher_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(existing) = app.get_webview_window("watcher") {
+        println!("Watcher window already open; showing existing instance");
+        let _ = existing.show();
+        return Ok(());
+    }
+
+    let url = tauri::WebviewUrl::App("watcher.html".into());
+
+    match tauri::webview::WebviewWindowBuilder::new(&app, "watcher", url)
+        .title("Wurm Watcher")
+        .inner_size(400.0, 600.0)
+        .resizable(true)
+        .decorations(true)
+        .build()
+    {
+        Ok(_) => {
+            println!("Watcher window created successfully");
+            Ok(())
+        }
+        Err(e) => {
+            println!("Failed to create watcher window: {:?}", e);
+            Err(format!("Failed to create watcher window: {:?}", e))
+        }
+    }
+}
+
+#[tauri::command]
+async fn close_watcher_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("watcher") {
+        window
+            .close()
+            .map_err(|err| format!("Failed to close watcher window: {:?}", err))?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
 async fn verify_session(
     auth_client: tauri::State<'_, AuthApiClient>,
     payload: VerifySessionPayload,
@@ -295,6 +341,11 @@ async fn update_settings(
 }
 
 fn main() {
+    // Log any panic to stderr so crashes surface in the dev console.
+    std::panic::set_hook(Box::new(|info| {
+        eprintln!("Panic: {info}");
+    }));
+
     let skill_sessions = new_skill_session_store();
     let skill_sessions_for_thread = Arc::clone(&skill_sessions);
 
@@ -312,6 +363,10 @@ fn main() {
     let auth_api_url = Url::parse(&auth_api_base).expect("AUTH_API_BASE_URL must be a valid URL");
     let auth_client = AuthApiClient::new(auth_api_url);
 
+    // Flag to allow tray "Quit" to exit, while closing windows does not terminate the app.
+    let quit_flag = Arc::new(AtomicBool::new(false));
+    let quit_flag_for_run = Arc::clone(&quit_flag);
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
@@ -325,15 +380,127 @@ fn main() {
             open_settings_window,
             open_trade_window,
             open_granger_window,
+            open_watcher_window,
             get_settings,
             get_skill_sessions,
             get_trade_entries,
             get_granger_entries,
             close_granger_window,
+            close_watcher_window,
             verify_session,
             update_settings
         ])
-        .setup(move |app| {
+        .on_window_event(|window, event| {
+            use tauri::WindowEvent;
+            if let WindowEvent::Destroyed = event {
+                println!("Window destroyed: {}", window.label());
+            }
+        })
+        .setup(move |app: &mut tauri::App| {
+            let quit_flag = Arc::clone(&quit_flag);
+            let open_skills = {
+                let item = MenuItem::new(app, "open_skills", true, None::<&str>)?;
+                item.set_text("Skills Tracker")?;
+                item
+            };
+            let open_trade = {
+                let item = MenuItem::new(app, "open_trade", true, None::<&str>)?;
+                item.set_text("Trade Monitor")?;
+                item
+            };
+            let open_granger = {
+                let item = MenuItem::new(app, "open_granger", true, None::<&str>)?;
+                item.set_text("Granger")?;
+                item
+            };
+            let open_watcher = {
+                let item = MenuItem::new(app, "open_watcher", true, None::<&str>)?;
+                item.set_text("Watcher")?;
+                item
+            };
+            let open_settings = {
+                let item = MenuItem::new(app, "open_settings", true, None::<&str>)?;
+                item.set_text("Settings")?;
+                item
+            };
+            let quit_item = {
+                let item = MenuItem::new(app, "quit", true, None::<&str>)?;
+                item.set_text("Quit")?;
+                item
+            };
+
+            let tray_menu = MenuBuilder::new(app)
+                .item(&open_skills)
+                .item(&open_trade)
+                .item(&open_granger)
+                .item(&open_watcher)
+                .separator()
+                .item(&open_settings)
+                .separator()
+                .item(&quit_item)
+                .build()?;
+
+            let id_open_skills = open_skills.id().clone();
+            let id_open_trade = open_trade.id().clone();
+            let id_open_granger = open_granger.id().clone();
+            let id_open_watcher = open_watcher.id().clone();
+            let id_open_settings = open_settings.id().clone();
+            let id_quit = quit_item.id().clone();
+
+            TrayIconBuilder::new()
+                .menu(&tray_menu)
+                .on_menu_event(move |app, event| {
+                    println!("Tray menu clicked: {:?}", event.id());
+                    if event.id() == &id_open_skills {
+                        let handle_for_state = app.clone();
+                        async_runtime::spawn(async move {
+                            let state: tauri::State<SharedSkillSessions> = handle_for_state.state();
+                            let handle = handle_for_state.clone();
+                            if let Err(err) = open_skills_window(handle, state).await {
+                                println!("failed to open skills window: {}", err);
+                            }
+                        });
+                    } else if event.id() == &id_open_trade {
+                        let handle_for_state = app.clone();
+                        async_runtime::spawn(async move {
+                            let state: tauri::State<SharedTradeEntries> = handle_for_state.state();
+                            let handle = handle_for_state.clone();
+                            if let Err(err) = open_trade_window(handle, state).await {
+                                println!("failed to open trade window: {}", err);
+                            }
+                        });
+                    } else if event.id() == &id_open_granger {
+                        let handle_for_state = app.clone();
+                        async_runtime::spawn(async move {
+                            let state: tauri::State<SharedGrangerEntries> = handle_for_state.state();
+                            let handle = handle_for_state.clone();
+                            if let Err(err) = open_granger_window(handle, state).await {
+                                println!("failed to open granger window: {}", err);
+                            }
+                        });
+                    } else if event.id() == &id_open_watcher {
+                        let handle = app.clone();
+                        async_runtime::spawn(async move {
+                            if let Err(err) = open_watcher_window(handle).await {
+                                println!("failed to open watcher window: {}", err);
+                            }
+                        });
+                    } else if event.id() == &id_open_settings {
+                        let handle_for_state = app.clone();
+                        async_runtime::spawn(async move {
+                            let state: tauri::State<SharedSettings> = handle_for_state.state();
+                            let handle = handle_for_state.clone();
+                            if let Err(err) = open_settings_window(handle, state).await {
+                                println!("failed to open settings window: {}", err);
+                            }
+                        });
+                    } else if event.id() == &id_quit {
+                        quit_flag.store(true, Ordering::Relaxed);
+                        app.exit(0);
+                    }
+                })
+                .build(app)?;
+
             DirectoryWatcher::new(
                 app.handle().clone(),
                 Arc::clone(&settings_for_thread),
@@ -345,6 +512,13 @@ fn main() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running Tauri app");
+        .build(tauri::generate_context!())
+        .expect("error while building Tauri app")
+        .run(move |_app_handle, event| {
+            if let tauri::RunEvent::ExitRequested { api, .. } = event {
+                if !quit_flag_for_run.load(Ordering::Relaxed) {
+                    api.prevent_exit();
+                }
+            }
+        });
 }
