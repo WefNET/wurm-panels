@@ -44,6 +44,12 @@ struct VerifySessionPayload {
     token: String,
 }
 
+#[derive(Deserialize)]
+struct SetAlwaysOnTopPayload {
+    window_label: String,
+    always_on_top: bool,
+}
+
 #[tauri::command]
 async fn open_skills_window(
     app: tauri::AppHandle,
@@ -299,6 +305,20 @@ async fn verify_session(
 }
 
 #[tauri::command]
+async fn set_always_on_top(
+    app: tauri::AppHandle,
+    payload: SetAlwaysOnTopPayload,
+) -> Result<(), String> {
+    let Some(window) = app.get_webview_window(&payload.window_label) else {
+        return Err(format!("Window not found: {}", payload.window_label));
+    };
+
+    window
+        .set_always_on_top(payload.always_on_top)
+        .map_err(|err| format!("Failed to set always_on_top: {err}"))
+}
+
+#[tauri::command]
 async fn close_granger_window(app: tauri::AppHandle) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("granger") {
         window
@@ -394,7 +414,8 @@ fn main() {
             close_granger_window,
             close_watcher_window,
             verify_session,
-            update_settings
+            update_settings,
+            set_always_on_top
         ])
         .on_window_event(|window, event| {
             use tauri::WindowEvent;
