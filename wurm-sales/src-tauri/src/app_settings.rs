@@ -6,15 +6,37 @@ use std::sync::{Arc, Mutex};
 
 pub const SETTINGS_FILE_NAME: &str = "settings.json";
 
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct WindowPlacement {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+}
+
+impl Default for WindowPlacement {
+    fn default() -> Self {
+        Self {
+            x: 100.0,
+            y: 100.0,
+            width: 420.0,
+            height: 140.0,
+        }
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize)]
 pub struct AppSettings {
     pub watch_dir: String,
+    #[serde(default)]
+    pub skills_window: WindowPlacement,
 }
 
 impl AppSettings {
     pub fn default() -> Self {
         Self {
             watch_dir: "C:\\Users\\johnw\\wurm\\players\\jackjones\\logs".to_string(),
+            skills_window: WindowPlacement::default(),
         }
     }
 }

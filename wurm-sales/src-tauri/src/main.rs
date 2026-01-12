@@ -54,6 +54,7 @@ struct SetAlwaysOnTopPayload {
 async fn open_skills_window(
     app: tauri::AppHandle,
     skill_state: tauri::State<'_, SharedSkillSessions>,
+    settings_state: tauri::State<'_, SharedSettings>,
 ) -> Result<(), String> {
     if let Some(existing) = app.get_webview_window("skills") {
         println!("Skills window already open; showing existing instance");
@@ -63,18 +64,30 @@ async fn open_skills_window(
 
     let url = tauri::WebviewUrl::App("skills.html".into());
 
+    let placement = {
+        let settings = settings_state
+            .lock()
+            .map_err(|e| format!("Failed to access settings: {}", e))?;
+        settings.skills_window.clone()
+    };
+
+    let width = placement.width.max(420.0);
+    let height = placement.height.max(140.0);
+
     match tauri::webview::WebviewWindowBuilder::new(&app, "skills", url)
         .title("Wurm Skills Tracker")
-        .inner_size(600.0, 220.0)
+        .position(placement.x, placement.y)
+        .inner_size(width, height)
         .min_inner_size(420.0, 140.0)
         .max_inner_size(800.0, 300.0)
         .resizable(true)
         .decorations(false)
+        .minimizable(false)
         .always_on_top(true)
         .skip_taskbar(true)
         .focusable(false)
         .transparent(true)
-        .shadow(false)
+        .shadow(true)
         .build()
     {
         Ok(window) => {
@@ -383,6 +396,7 @@ fn main() {
 
     let settings = new_settings_store(load_settings_from_disk());
     let settings_for_thread = Arc::clone(&settings);
+    let settings_for_events = Arc::clone(&settings);
 
     let auth_api_base =
         env::var("AUTH_API_BASE_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
@@ -417,8 +431,35 @@ fn main() {
             update_settings,
             set_always_on_top
         ])
-        .on_window_event(|window, event| {
+        .on_window_event(move |window, event| {
             use tauri::WindowEvent;
+            if window.label() == "skills" {
+                match event {
+                    WindowEvent::Moved(_) | WindowEvent::Resized(_) => {
+                        let (Ok(pos), Ok(size)) = (window.outer_position(), window.outer_size())
+                        else {
+                            println!("Failed to read skills window geometry");
+                            return;
+                        };
+
+                        let settings_store = Arc::clone(&settings_for_events);
+
+                        if let Ok(mut settings) = settings_store.lock() {
+                            settings.skills_window.x = pos.x as f64;
+                            settings.skills_window.y = pos.y as f64;
+                            settings.skills_window.width = size.width as f64;
+                            settings.skills_window.height = size.height as f64;
+
+                            if let Err(err) = persist_settings(&settings) {
+                                println!("Failed to persist skills window placement: {err}");
+                            }
+                        } else {
+                            println!("Failed to lock settings for window placement update");
+                        };
+                    }
+                    _ => {}
+                }
+            }
             if let WindowEvent::Destroyed = event {
                 println!("Window destroyed: {}", window.label());
             }
@@ -481,9 +522,14 @@ fn main() {
                     if event.id() == &id_open_skills {
                         let handle_for_state = app.clone();
                         async_runtime::spawn(async move {
-                            let state: tauri::State<SharedSkillSessions> = handle_for_state.state();
+                            let skill_state: tauri::State<SharedSkillSessions> =
+                                handle_for_state.state();
+                            let settings_state: tauri::State<SharedSettings> =
+                                handle_for_state.state();
                             let handle = handle_for_state.clone();
-                            if let Err(err) = open_skills_window(handle, state).await {
+                            if let Err(err) =
+                                open_skills_window(handle, skill_state, settings_state).await
+                            {
                                 println!("failed to open skills window: {}", err);
                             }
                         });
