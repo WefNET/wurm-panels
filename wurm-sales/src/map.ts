@@ -15,18 +15,24 @@ const projection = new Projection({
     extent: extent
 });
 
+// Define resolutions for both TileGrid and View
+const resolutions = [
+    32, // z0: 8192 / 256 = 32 map units per pixel (Map is 256px wide)
+    16, // z1
+    8,  // z2
+    4,  // z3
+    2,  // z4
+    1,  // z5: native resolution (1 map unit = 1 pixel)
+    0.5, // z6: virtual
+    0.25, // z7: virtual
+    0.125 // z8: virtual
+];
+
 const tileGrid = new TileGrid({
     extent: extent,
     origin: [0, 8192], // Top-left origin
     tileSize: 256,
-    resolutions: [
-        32, // z0
-        16,
-        8,
-        4,
-        2,
-        1   // z5
-    ]
+    resolutions: resolutions.slice(0, 6) // Only up to z5 exist as tiles
 });
 
 const layer = new TileLayer({
@@ -70,10 +76,20 @@ const map = new Map({
     view: new View({
         projection: projection,
         center: [4096, 4096],  // center of your image
+        resolutions: resolutions, // Use explicit resolutions for z0-z8
         zoom: 2,
-        maxZoom: 5,
-        extent: extent
+        constrainResolution: true, // Snap to integer zoom levels
+        // extent: extent // Removed to allow zooming out to see margin
     })
 });
+
+// Fit map to window initially
+map.getView().fit(extent, { padding: [50, 50, 50, 50] });
+
+// Zoom in one level from the "fit" view
+const currentZoom = map.getView().getZoom();
+if (currentZoom !== undefined) {
+    map.getView().setZoom(currentZoom + 1);
+}
 
 console.log('Xanadu map initialized', map);
