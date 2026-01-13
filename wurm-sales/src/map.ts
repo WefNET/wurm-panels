@@ -7,6 +7,50 @@ import Projection from 'ol/proj/Projection';
 import TileGrid from 'ol/tilegrid/TileGrid';
 import MousePosition from 'ol/control/MousePosition';
 import { defaults as defaultControls } from 'ol/control';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import Feature from 'ol/Feature';
+import Point from 'ol/geom/Point';
+import { Style, Stroke, Fill, Text, Circle as CircleStyle } from 'ol/style';
+
+const xanaduStartingTowns = [
+    {
+        "Name": "Summerholt",
+        "Coords": [6602, 2252]
+    },
+    {
+        "Name": "Greymead",
+        "Coords": [4701, 3051]
+    },
+    {
+        "Name": "Whitefay",
+        "Coords": [5651, 3051]
+    },
+    {
+        "Name": "Glasshollow",
+        "Coords": [1580, 787]
+    },
+    {
+        "Name": "Newspring",
+        "Coords": [883, 7229]
+    },
+    {
+        "Name": "Esteron",
+        "Coords": [7410, 6434]
+    },
+    {
+        "Name": "Linton",
+        "Coords": [1825, 4166]
+    },
+    {
+        "Name": "Lormere",
+        "Coords": [3481, 6437]
+    },
+    {
+        "Name": "Vrock Landing",
+        "Coords": [2722, 2241]
+    }
+];
 
 // The extent matches your full image size
 const extent: [number, number, number, number] = [0, 0, 8192, 8192];
@@ -71,9 +115,56 @@ const layer = new TileLayer({
     })
 });
 
+// Transform starting towns (pixels) to map coordinates
+// OpenLayers (top-left origin 0,0) needs Y to be unmodified if we want (x, y) to match the expected location on the grid
+// However, the coordinate format function earlier used `8192 - coord` to display "Game Coordinates"
+// If xanaduStartingTowns are in "Game Coordinates", we need to flip Y for OpenLayers rendering
+
+const startingTownsFeatures = xanaduStartingTowns.map(town => {
+    // Convert game coordinates (Y up) to map coordinates (Y down from top-left, which is 0)
+    // Game Y 2231 -> Map Y is 2231 if we assume origin matches?
+    // Wait, earlier we said:
+    // coordinateFormat: y = 8192 - coord[1]
+    // So coord[1] (OpenLayers Y) = 8192 - y (Game Y)
+
+    const x = town.Coords[0];
+    const y = 8192 - town.Coords[1];
+
+    const feature = new Feature({
+        geometry: new Point([x, y]),
+        name: town.Name
+    });
+
+    feature.setStyle(new Style({
+        image: new CircleStyle({
+            radius: 8,
+            fill: new Fill({ color: 'rgba(255, 215, 0, 0.6)' }),
+            stroke: new Stroke({ color: '#FFD700', width: 2 })
+        }),
+        text: new Text({
+            text: town.Name,
+            font: '14px Calibri,sans-serif',
+            fill: new Fill({ color: '#fff' }),
+            stroke: new Stroke({
+                color: '#000',
+                width: 3
+            }),
+            offsetY: -20
+        })
+    }));
+
+    return feature;
+});
+
+const vectorLayer = new VectorLayer({
+    source: new VectorSource({
+        features: startingTownsFeatures
+    })
+});
+
 const map = new Map({
     target: 'map',  // id of your HTML element
-    layers: [layer],
+    layers: [layer, vectorLayer],
     controls: defaultControls().extend([
         new MousePosition({
             coordinateFormat: (coord) => {
