@@ -2,7 +2,7 @@ import 'ol/ol.css';
 import Map from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
-import TileImage from 'ol/source/TileImage';
+import XYZ from 'ol/source/XYZ';
 import Projection from 'ol/proj/Projection';
 import TileGrid from 'ol/tilegrid/TileGrid';
 import MousePosition from 'ol/control/MousePosition';
@@ -82,10 +82,9 @@ const tileGrid = new TileGrid({
 });
 
 const layer = new TileLayer({
-    source: new TileImage({
+    source: new XYZ({
         projection: projection,
         tileGrid: tileGrid,
-        crossOrigin: 'anonymous',
         tileUrlFunction: (tileCoord) => {
             if (!tileCoord) return undefined;
 
@@ -111,7 +110,9 @@ const layer = new TileLayer({
 
             const url = `https://pub-6192353739be4c3191140ad893e309f2.r2.dev/xanadu/2025/terrain/${z}/${x}/${yFlipped}.png`;
             return url;
-        }
+        },
+        crossOrigin: 'anonymous',
+        tileSize: 256
     })
 });
 
