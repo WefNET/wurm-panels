@@ -254,6 +254,31 @@ async fn open_granger_window(
 }
 
 #[tauri::command]
+async fn open_map_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(existing) = app.get_webview_window("map") {
+        println!("Map window already open; showing existing instance");
+        let _ = existing.show();
+        return Ok(());
+    }
+
+    let url = tauri::WebviewUrl::App("map.html".into());
+
+    match tauri::webview::WebviewWindowBuilder::new(&app, "map", url)
+        .title("Xanadu Map")
+        .inner_size(1200.0, 900.0)
+        .min_inner_size(800.0, 600.0)
+        .resizable(true)
+        .build()
+    {
+        Ok(_) => Ok(()),
+        Err(err) => {
+            println!("Failed to create map window: {:?}", err);
+            Err(format!("Failed to create map window: {:?}", err))
+        }
+    }
+}
+
+#[tauri::command]
 async fn get_granger_entries(
     granger_state: tauri::State<'_, SharedGrangerEntries>,
 ) -> Result<Vec<GrangerAnimal>, String> {
@@ -420,6 +445,7 @@ fn main() {
             open_settings_window,
             open_trade_window,
             open_granger_window,
+            open_map_window,
             open_watcher_window,
             get_settings,
             get_skill_sessions,
@@ -486,6 +512,11 @@ fn main() {
                 item.set_text("Watcher")?;
                 item
             };
+            let open_map = {
+                let item = MenuItem::new(app, "open_map", true, None::<&str>)?;
+                item.set_text("Xanadu Map")?;
+                item
+            };
             let open_settings = {
                 let item = MenuItem::new(app, "open_settings", true, None::<&str>)?;
                 item.set_text("Settings")?;
@@ -502,6 +533,7 @@ fn main() {
                 .item(&open_trade)
                 .item(&open_granger)
                 .item(&open_watcher)
+                .item(&open_map)
                 .separator()
                 .item(&open_settings)
                 .separator()
@@ -512,6 +544,7 @@ fn main() {
             let id_open_trade = open_trade.id().clone();
             let id_open_granger = open_granger.id().clone();
             let id_open_watcher = open_watcher.id().clone();
+            let id_open_map = open_map.id().clone();
             let id_open_settings = open_settings.id().clone();
             let id_quit = quit_item.id().clone();
 
@@ -556,6 +589,13 @@ fn main() {
                         async_runtime::spawn(async move {
                             if let Err(err) = open_watcher_window(handle).await {
                                 println!("failed to open watcher window: {}", err);
+                            }
+                        });
+                    } else if event.id() == &id_open_map {
+                        let handle = app.clone();
+                        async_runtime::spawn(async move {
+                            if let Err(err) = open_map_window(handle).await {
+                                println!("failed to open map window: {}", err);
                             }
                         });
                     } else if event.id() == &id_open_settings {

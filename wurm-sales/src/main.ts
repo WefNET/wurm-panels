@@ -123,6 +123,20 @@ openGrangerButton.addEventListener('click', async () => {
   }
 });
 controls.appendChild(openGrangerButton);
+
+const openMapButton = document.createElement('button');
+openMapButton.textContent = 'Xanadu Map';
+openMapButton.style.cssText = buttonStyle;
+openMapButton.style.backgroundColor = '#00897B';
+openMapButton.addEventListener('click', async () => {
+  try {
+    await invoke('open_map_window');
+  } catch (error) {
+    console.error('Failed to open map window:', error);
+  }
+});
+controls.appendChild(openMapButton);
+
 controls.appendChild(watchDirInfo);
 
 app.insertBefore(controls, app.firstChild);
