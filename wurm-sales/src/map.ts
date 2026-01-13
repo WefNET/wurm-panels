@@ -6,7 +6,6 @@ import TileImage from 'ol/source/TileImage';
 import Projection from 'ol/proj/Projection';
 import TileGrid from 'ol/tilegrid/TileGrid';
 import MousePosition from 'ol/control/MousePosition';
-import { createStringXY } from 'ol/coordinate';
 import { defaults as defaultControls } from 'ol/control';
 
 // The extent matches your full image size
@@ -72,7 +71,6 @@ const layer = new TileLayer({
     })
 });
 
-
 const map = new Map({
     target: 'map',  // id of your HTML element
     layers: [layer],
@@ -80,8 +78,8 @@ const map = new Map({
         new MousePosition({
             coordinateFormat: (coord) => {
                 if (!coord) return '';
-                const x = Math.round(coord[0]);
-                const y = Math.round(8192 - coord[1]);
+                const x = Math.max(0, Math.min(8192, Math.round(coord[0])));
+                const y = Math.max(0, Math.min(8192, Math.round(8192 - coord[1])));
                 return `${x}, ${y}`;
             },
             className: 'custom-mouse-position',
