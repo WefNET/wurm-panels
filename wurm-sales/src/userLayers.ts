@@ -53,22 +53,22 @@ const iconStyles = {
     house: new Style({
         image: new Icon({
             anchor: [0.5, 1],
-            src: 'https://static.thenounproject.com/png/65-200.png', // Simple house icon
-            scale: 0.2
+            src: 'https://api.iconify.design/mdi/home.svg?color=%23ffffff', // White house icon
+            scale: 1.5
         })
     }),
     mine: new Style({
         image: new Icon({
             anchor: [0.5, 0.5],
-            src: 'https://static.thenounproject.com/png/1164-200.png', // Simple pickaxe icon
-            scale: 0.2
+            src: 'https://api.iconify.design/mdi/pickaxe.svg?color=%23ffffff', // White pickaxe icon
+            scale: 1.5
         })
     }),
     cave: new Style({
         image: new Icon({
             anchor: [0.5, 0.5],
-            src: 'https://static.thenounproject.com/png/9233-200.png', // Simple cave icon
-            scale: 0.2
+            src: 'https://api.iconify.design/game-icons/cave-entrance.svg?color=%23ffffff', // White cave icon
+            scale: 1.5
         })
     })
 };
