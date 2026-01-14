@@ -10,8 +10,10 @@ import { defaults as defaultControls } from 'ol/control';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import Feature from 'ol/Feature';
-import Point from 'ol/geom/Point';
+import { Point, Geometry } from 'ol/geom';
 import { Style, Stroke, Fill, Text, Circle as CircleStyle } from 'ol/style';
+import { addUserLayer, toggleUserLayer, getUserLayers, UserLayer, addFeatureToLayer } from './userLayers';
+import { Draw } from 'ol/interaction';
 
 const xanaduStartingTowns = [
     {
@@ -160,7 +162,10 @@ const startingTownsFeatures = xanaduStartingTowns.map(town => {
 const vectorLayer = new VectorLayer({
     source: new VectorSource({
         features: startingTownsFeatures
-    })
+    }),
+    properties: {
+        'willReadFrequently': true
+    }
 });
 
 const map = new Map({
@@ -190,6 +195,31 @@ const map = new Map({
 // Fit map to window initially
 map.getView().fit(extent, { padding: [50, 50, 50, 50] });
 
+// Add a sample user layer for demonstration
+addUserLayer(map, {
+    name: 'My Points of Interest',
+    visible: true,
+    features: [
+        {
+            type: 'Point',
+            coordinates: [4096, 4096], // Center of the map
+            properties: {
+                name: 'Central Tower',
+                description: 'A mysterious tower in the center of the world.'
+            }
+        }
+    ]
+});
+
+// Example of how to toggle the layer (e.g., from a button click)
+// For now, we can log it to the console.
+console.log("Toggling 'My Points of Interest' layer off in 5 seconds...");
+setTimeout(() => {
+    toggleUserLayer(map, 'My Points of Interest');
+    console.log("Layer toggled. Check the map.");
+}, 5000);
+
+
 // Zoom in one level from the "fit" view
 const currentZoom = map.getView().getZoom();
 if (currentZoom !== undefined) {
@@ -197,3 +227,202 @@ if (currentZoom !== undefined) {
 }
 
 console.log('Xanadu map initialized', map);
+
+// --- UI Layer Manager ---
+const layerList = document.getElementById('layer-list') as HTMLUListElement;
+const newLayerNameInput = document.getElementById('new-layer-name') as HTMLInputElement;
+const addLayerBtn = document.getElementById('add-layer-btn') as HTMLButtonElement;
+const drawPointBtn = document.getElementById('draw-point-btn') as HTMLButtonElement;
+
+// --- Feature Info Box ---
+const featureInfoBox = document.getElementById('feature-info') as HTMLDivElement;
+const featureInfoName = document.getElementById('feature-info-name') as HTMLHeadingElement;
+const featureInfoDesc = document.getElementById('feature-info-desc') as HTMLParagraphElement;
+const featureInfoType = document.getElementById('feature-info-type') as HTMLSpanElement;
+const featureInfoCoords = document.getElementById('feature-info-coords') as HTMLSpanElement;
+const featureInfoCloseBtn = document.getElementById('feature-info-close') as HTMLButtonElement;
+
+// --- Add Feature Modal ---
+const addFeatureModal = document.getElementById('add-feature-modal') as HTMLDivElement;
+const featureNameInput = document.getElementById('feature-name') as HTMLInputElement;
+const featureDescTextarea = document.getElementById('feature-desc') as HTMLTextAreaElement;
+const featureIconSelect = document.getElementById('feature-icon-type') as HTMLSelectElement;
+const saveFeatureBtn = document.getElementById('save-feature-btn') as HTMLButtonElement;
+const cancelFeatureBtn = document.getElementById('cancel-feature-btn') as HTMLButtonElement;
+
+
+let drawInteraction: Draw | null = null;
+let selectedLayerForDrawing: string | null = null;
+
+function renderLayerList() {
+    if (!layerList) return;
+    layerList.innerHTML = ''; // Clear existing list
+
+    const layers = getUserLayers();
+    layers.forEach((layer: UserLayer) => {
+        const listItem = document.createElement('li');
+
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'selected-layer';
+        radio.value = layer.name;
+        radio.id = `radio-${layer.name}`;
+        radio.addEventListener('change', () => {
+            selectedLayerForDrawing = layer.name;
+        });
+
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = layer.visible;
+        checkbox.dataset.layerName = layer.name;
+        checkbox.addEventListener('change', () => {
+            toggleUserLayer(map, layer.name);
+        });
+
+        const label = document.createElement('label');
+        label.htmlFor = `radio-${layer.name}`;
+        label.textContent = layer.name;
+
+        listItem.appendChild(radio);
+        listItem.appendChild(checkbox);
+        listItem.appendChild(label);
+        layerList.appendChild(listItem);
+    });
+}
+
+addLayerBtn.addEventListener('click', () => {
+    const name = newLayerNameInput.value.trim();
+    if (name) {
+        const newLayer: UserLayer = {
+            name: name,
+            visible: true,
+            features: [] // Start with an empty layer
+        };
+        addUserLayer(map, newLayer);
+        newLayerNameInput.value = ''; // Clear input
+        renderLayerList(); // Update UI
+    }
+});
+
+drawPointBtn.addEventListener('click', () => {
+    if (!selectedLayerForDrawing) {
+        alert('Please select a layer to draw on first.');
+        return;
+    }
+    startDrawing('Point');
+});
+
+function startDrawing(type: 'Point' | 'LineString' | 'Polygon') {
+    if (drawInteraction) {
+        map.removeInteraction(drawInteraction);
+    }
+
+    const targetLayerName = selectedLayerForDrawing;
+    if (!targetLayerName) return;
+
+    const olLayer = map.getLayers().getArray().find(l => l.get('name') === targetLayerName) as VectorLayer<VectorSource<Feature<Geometry>>>;
+    const source = olLayer.getSource();
+    if (!source) return;
+
+    drawInteraction = new Draw({
+        source: source,
+        type: type,
+    });
+
+    drawInteraction.on('drawend', (event) => {
+        const feature = event.feature;
+        const geometry = feature.getGeometry();
+        if (geometry) {
+            // Show the modal instead of the prompt
+            addFeatureModal.style.display = 'block';
+
+            const saveHandler = () => {
+                const coords = (geometry as Point).getCoordinates();
+                const featureName = featureNameInput.value || 'New Point';
+                const featureDesc = featureDescTextarea.value;
+                const iconType = featureIconSelect.value;
+
+                addFeatureToLayer(map, targetLayerName, {
+                    type: 'Point',
+                    coordinates: coords,
+                    properties: {
+                        name: featureName,
+                        description: featureDesc,
+                        icon: iconType,
+                    },
+                });
+
+                // Clean up and close modal
+                addFeatureModal.style.display = 'none';
+                featureNameInput.value = '';
+                featureDescTextarea.value = '';
+                featureIconSelect.value = 'default';
+                saveFeatureBtn.removeEventListener('click', saveHandler);
+            };
+
+            const cancelHandler = () => {
+                addFeatureModal.style.display = 'none';
+                cancelFeatureBtn.removeEventListener('click', cancelHandler);
+                // If canceled, remove the feature that was temporarily drawn
+                const source = olLayer.getSource();
+                if (source) {
+                    source.removeFeature(feature);
+                }
+            };
+
+            saveFeatureBtn.addEventListener('click', saveHandler, { once: true });
+            cancelFeatureBtn.addEventListener('click', cancelHandler, { once: true });
+        }
+        map.removeInteraction(drawInteraction!);
+        drawInteraction = null;
+    });
+
+    map.addInteraction(drawInteraction);
+}
+
+// --- Map Click Interaction ---
+map.on('click', function (evt) {
+    // If drawing, don't show info box
+    if (drawInteraction) {
+        return;
+    }
+
+    const feature = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
+        return feature;
+    });
+
+    if (feature) {
+        const properties = feature.getProperties();
+        const geometry = feature.getGeometry();
+
+        featureInfoName.textContent = properties.name || 'Unnamed Feature';
+        featureInfoDesc.textContent = properties.description || '';
+        featureInfoType.textContent = properties.icon || 'default';
+
+        if (geometry) {
+            const type = geometry.getType();
+
+            if (type === 'Point') {
+                const coords = (geometry as Point).getCoordinates();
+                // Transform to game coordinates for display
+                const gameX = Math.round(coords[0]);
+                const gameY = Math.round(8192 - coords[1]);
+                featureInfoCoords.textContent = `${gameX}, ${gameY}`;
+            } else {
+                featureInfoCoords.textContent = 'N/A'; // Or handle other geometry types
+            }
+        }
+
+        featureInfoBox.style.display = 'block';
+    } else {
+        featureInfoBox.style.display = 'none';
+    }
+});
+
+featureInfoCloseBtn.addEventListener('click', () => {
+    featureInfoBox.style.display = 'none';
+});
+
+// Initial render of the layer list
+renderLayerList();

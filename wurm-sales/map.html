@@ -48,6 +48,53 @@
 
 <body>
     <div id="map"></div>
+    <div id="layer-manager">
+        <h2>User Layers</h2>
+        <ul id="layer-list">
+            <!-- Layers will be dynamically added here -->
+        </ul>
+        <div class="form-container">
+            <input type="text" id="new-layer-name" placeholder="New layer name" />
+            <button id="add-layer-btn">Add Layer</button>
+        </div>
+        <div id="drawing-controls">
+            <h3>Drawing</h3>
+            <button id="draw-point-btn">Add Point</button>
+            <p>Select a layer and click "Add Point", then click on the map.</p>
+        </div>
+    </div>
+    <div id="feature-info" style="display: none;">
+        <h3 id="feature-info-name"></h3>
+        <p id="feature-info-desc"></p>
+        <p><strong>Type:</strong> <span id="feature-info-type"></span></p>
+        <p><strong>Coords:</strong> <span id="feature-info-coords"></span></p>
+        <button id="feature-info-close">Close</button>
+    </div>
+
+    <!-- Modal for adding a new feature -->
+    <div id="add-feature-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h3>Add New Feature</h3>
+            <label for="feature-name">Name:</label>
+            <input type="text" id="feature-name" placeholder="e.g., My House">
+            
+            <label for="feature-desc">Description:</label>
+            <textarea id="feature-desc" placeholder="A cozy little spot."></textarea>
+            
+            <label for="feature-icon-type">Icon Type:</label>
+            <select id="feature-icon-type">
+                <option value="default">Default</option>
+                <option value="house">House</option>
+                <option value="mine">Mine</option>
+                <option value="cave">Cave</option>
+            </select>
+            
+            <div class="modal-buttons">
+                <button id="save-feature-btn">Save</button>
+                <button id="cancel-feature-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
