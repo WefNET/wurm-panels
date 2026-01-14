@@ -180,13 +180,13 @@ button {
     list-style: none;
     padding: 0;
     margin: 0 0 10px 0;
-}
+    color: var(--ol-foreground-color);
+  }
 
 #layer-list li {
     display: flex;
     align-items: center;
     padding: 5px 0;
-    color: var(--ol-foreground-color);
 }
 
 #layer-list input[type="checkbox"] {
@@ -214,6 +214,7 @@ button {
     z-index: 1001;
     width: 300px;
     max-width: 90%;
+    color: var(--ol-foreground-color);
 }
 
 #feature-info h3 {
@@ -235,6 +236,7 @@ button {
     height: 100%;
     overflow: auto;
     background-color: rgba(0,0,0,0.4);
+    color: var(--ol-foreground-color);
 }
 
 .modal-content {
