@@ -6,6 +6,7 @@ mod auth_client;
 mod granger;
 mod skill_sessions;
 mod trade_entries;
+mod user_layers_persistence;
 mod watcher;
 
 use app_settings::{
@@ -455,7 +456,9 @@ fn main() {
             close_watcher_window,
             verify_session,
             update_settings,
-            set_always_on_top
+            set_always_on_top,
+            user_layers_persistence::load_user_layers,
+            user_layers_persistence::save_user_layers
         ])
         .on_window_event(move |window, event| {
             use tauri::WindowEvent;

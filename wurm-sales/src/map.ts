@@ -12,7 +12,7 @@ import VectorSource from 'ol/source/Vector';
 import Feature from 'ol/Feature';
 import { Point, Geometry } from 'ol/geom';
 import { Style, Stroke, Fill, Text, Circle as CircleStyle } from 'ol/style';
-import { addUserLayer, toggleUserLayer, getUserLayers, UserLayer, addFeatureToLayer } from './userLayers';
+import { addUserLayer, toggleUserLayer, getUserLayers, UserLayer, addFeatureToLayer, loadAndRenderUserLayers } from './userLayers';
 import { Draw } from 'ol/interaction';
 
 const xanaduStartingTowns = [
@@ -195,7 +195,15 @@ const map = new Map({
 // Fit map to window initially
 map.getView().fit(extent, { padding: [50, 50, 50, 50] });
 
-// Add a sample user layer for demonstration
+// Load saved user layers from disk
+loadAndRenderUserLayers(map).then(() => {
+    console.log('User layers loaded from disk');
+}).catch(err => {
+    console.error('Failed to load user layers:', err);
+});
+
+// Add a sample user layer for demonstration (commented out since we now load from disk)
+/*
 addUserLayer(map, {
     name: 'My Points of Interest',
     visible: true,
@@ -210,14 +218,17 @@ addUserLayer(map, {
         }
     ]
 });
+*/
 
 // Example of how to toggle the layer (e.g., from a button click)
 // For now, we can log it to the console.
+/*
 console.log("Toggling 'My Points of Interest' layer off in 5 seconds...");
 setTimeout(() => {
     toggleUserLayer(map, 'My Points of Interest');
     console.log("Layer toggled. Check the map.");
 }, 5000);
+*/
 
 
 // Zoom in one level from the "fit" view

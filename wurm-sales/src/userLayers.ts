@@ -5,6 +5,7 @@ import GeoJSON from 'ol/format/GeoJSON';
 import { Feature } from 'ol';
 import { Geometry } from 'ol/geom';
 import { Style, Stroke, Fill, Circle as CircleStyle, Icon, Text } from 'ol/style';
+import { invoke } from '@tauri-apps/api/core';
 
 // Define the structure for a single geographic feature
 export interface UserFeature {
@@ -39,7 +40,19 @@ export interface UserLayer {
 }
 
 // In-memory store for layers for now. We will integrate with Tauri later.
-const userLayers: UserLayer[] = [];
+let userLayers: UserLayer[] = [];
+
+/**
+ * Saves all current user layers to disk via Tauri.
+ */
+async function persistUserLayers() {
+    try {
+        await invoke('save_user_layers', { layers: userLayers });
+        console.log('User layers saved.');
+    } catch (error) {
+        console.error('Failed to save user layers:', error);
+    }
+}
 
 // Define styles for different icon types
 const iconStyles = {
@@ -170,6 +183,7 @@ export function addFeatureToLayer(map: Map, layerName: string, featureData: User
 
     // Later, we'll save the updated userLayer to JSON via Tauri here.
     console.log(`Feature added to ${layerName}`, userLayer);
+    persistUserLayers();
 }
 
 
@@ -188,6 +202,7 @@ export function addUserLayer(map: Map, layerData: UserLayer) {
     const olLayer = createOLLayer(layerData);
     map.addLayer(olLayer);
     // Later, we'll save to JSON via Tauri here.
+    persistUserLayers();
 }
 
 /**
@@ -205,6 +220,7 @@ export function toggleUserLayer(map: Map, layerName: string) {
         if (storeLayer) {
             storeLayer.visible = !isVisible;
             // Later, we'll save to JSON via Tauri here.
+            persistUserLayers();
         }
     }
 }
@@ -246,6 +262,7 @@ export function removeFeatureFromLayer(map: Map, layerName: string, featureId: s
 
     // Later, we'll save the updated userLayer to JSON via Tauri here.
     console.log(`Feature removed from ${layerName}`, userLayer);
+    persistUserLayers();
 }
 
 /**
@@ -294,4 +311,32 @@ export function importUserLayers(geojson: string) {
 
     // For now, just log the imported layers
     console.log('Imported user layers', userLayers);
+    persistUserLayers();
+}
+
+/**
+ * Loads user layers from disk via Tauri and adds them to the map.
+ * @param map The OpenLayers map instance.
+ */
+export async function loadAndRenderUserLayers(map: Map) {
+    try {
+        const loadedLayers = await invoke('load_user_layers') as UserLayer[];
+        userLayers = loadedLayers; // Overwrite the in-memory store
+        console.log('Loaded user layers:', userLayers);
+
+        // Clear existing user layers from the map before adding new ones
+        map.getLayers().getArray()
+            .filter(layer => layer.get('name') && userLayers.some(ul => ul.name === layer.get('name')))
+            .forEach(layer => map.removeLayer(layer));
+        
+        // Add the loaded layers to the map
+        userLayers.forEach(layerData => {
+            const olLayer = createOLLayer(layerData);
+            map.addLayer(olLayer);
+        });
+
+    } catch (error) {
+        console.error('Failed to load user layers:', error);
+        userLayers = []; // Ensure we start with a clean slate on error
+    }
 }
