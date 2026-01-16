@@ -14,75 +14,36 @@ import { Point, Geometry } from 'ol/geom';
 import { Style, Stroke, Fill, Text, Circle as CircleStyle } from 'ol/style';
 import { addUserLayer, toggleUserLayer, getUserLayers, UserLayer, addFeatureToLayer, loadAndRenderUserLayers } from './userLayers';
 import { Draw } from 'ol/interaction';
+import { getMapConfig, MapConfig } from './mapConfigs';
 
-const xanaduStartingTowns = [
-    {
-        "Name": "Summerholt",
-        "Coords": [6602, 2252]
-    },
-    {
-        "Name": "Greymead",
-        "Coords": [4701, 3051]
-    },
-    {
-        "Name": "Whitefay",
-        "Coords": [5651, 3051]
-    },
-    {
-        "Name": "Glasshollow",
-        "Coords": [1580, 787]
-    },
-    {
-        "Name": "Newspring",
-        "Coords": [883, 7229]
-    },
-    {
-        "Name": "Esteron",
-        "Coords": [7410, 6434]
-    },
-    {
-        "Name": "Linton",
-        "Coords": [1825, 4166]
-    },
-    {
-        "Name": "Lormere",
-        "Coords": [3481, 6437]
-    },
-    {
-        "Name": "Vrock Landing",
-        "Coords": [2722, 2241]
-    }
-];
+// Get the current map configuration (default to Xanadu for now)
+// In the future, this will be determined by user selection
+const CURRENT_MAP_ID = 'xanadu';
+const mapConfig = getMapConfig(CURRENT_MAP_ID);
 
-// The extent matches your full image size
-const extent: [number, number, number, number] = [0, 0, 8192, 8192];
+if (!mapConfig) {
+    throw new Error(`Map configuration not found for: ${CURRENT_MAP_ID}`);
+}
+
+// Use configuration values
+const extent = mapConfig.extent;
+const resolutions = mapConfig.resolutions;
 
 const projection = new Projection({
-    code: 'XANADU',
+    code: mapConfig.id.toUpperCase(),
     units: 'pixels',
     extent: extent
 });
 
-// Define resolutions for both TileGrid and View
-const resolutions = [
-    32, // z0: 8192 / 256 = 32 map units per pixel (Map is 256px wide)
-    16, // z1
-    8,  // z2
-    4,  // z3
-    2,  // z4
-    1,  // z5: native resolution (1 map unit = 1 pixel)
-    0.5, // z6: virtual
-    0.25, // z7: virtual
-    0.125 // z8: virtual
-];
-
 const tileGrid = new TileGrid({
     extent: extent,
-    origin: [0, 8192], // Top-left origin
+    origin: [0, extent[3]], // Top-left origin (dynamic based on extent)
     tileSize: 256,
-    resolutions: resolutions.slice(0, 7) // z0-z6 (7 levels: 0,1,2,3,4,5,6)
+    resolutions: resolutions.slice(0, mapConfig.tileLayers[0].zoomLevels)
 });
 
+// Create tile layers from configuration
+const terrainLayer = mapConfig.tileLayers[0]; // Get the first (terrain) layer
 const layer = new TileLayer({
     source: new XYZ({
         projection: projection,
@@ -97,32 +58,28 @@ const layer = new TileLayer({
             // XYZ tiles: Y=0 is at the top, which matches OpenLayers' top-left origin
             // No flipping needed!
 
-            const url = `https://pub-6192353739be4c3191140ad893e309f2.r2.dev/xanadu/2025/terrain/${z}/${x}/${y}.png`;
+            const url = terrainLayer.urlTemplate
+                .replace('{z}', z.toString())
+                .replace('{x}', x.toString())
+                .replace('{y}', y.toString());
             return url;
         },
         crossOrigin: 'anonymous',
         tileSize: 256
-    })
+    }),
+    opacity: terrainLayer.opacity || 1.0,
+    visible: terrainLayer.enabled
 });
 
-// Transform starting towns (pixels) to map coordinates
-// OpenLayers (top-left origin 0,0) needs Y to be unmodified if we want (x, y) to match the expected location on the grid
-// However, the coordinate format function earlier used `8192 - coord` to display "Game Coordinates"
-// If xanaduStartingTowns are in "Game Coordinates", we need to flip Y for OpenLayers rendering
-
-const startingTownsFeatures = xanaduStartingTowns.map(town => {
-    // Convert game coordinates (Y up) to map coordinates (Y down from top-left, which is 0)
-    // Game Y 2231 -> Map Y is 2231 if we assume origin matches?
-    // Wait, earlier we said:
-    // coordinateFormat: y = 8192 - coord[1]
-    // So coord[1] (OpenLayers Y) = 8192 - y (Game Y)
-
-    const x = town.Coords[0];
-    const y = 8192 - town.Coords[1];
+// Create starting location features from config
+const startingLocationFeatures = (mapConfig.startingLocations || []).map(location => {
+    // Convert game coordinates (Y up) to map coordinates (Y down from top-left)
+    const x = location.coords[0];
+    const y = extent[3] - location.coords[1]; // Use extent height for flipping
 
     const feature = new Feature({
         geometry: new Point([x, y]),
-        name: town.Name
+        name: location.name
     });
 
     feature.setStyle(new Style({
@@ -132,7 +89,7 @@ const startingTownsFeatures = xanaduStartingTowns.map(town => {
             stroke: new Stroke({ color: '#FFD700', width: 2 })
         }),
         text: new Text({
-            text: town.Name,
+            text: location.name,
             font: '14px Calibri,sans-serif',
             fill: new Fill({ color: '#fff' }),
             stroke: new Stroke({
@@ -148,7 +105,7 @@ const startingTownsFeatures = xanaduStartingTowns.map(town => {
 
 const vectorLayer = new VectorLayer({
     source: new VectorSource({
-        features: startingTownsFeatures
+        features: startingLocationFeatures
     }),
     properties: {
         'willReadFrequently': true
@@ -162,8 +119,8 @@ const map = new Map({
         new MousePosition({
             coordinateFormat: (coord) => {
                 if (!coord) return '';
-                const x = Math.max(0, Math.min(8192, Math.round(coord[0])));
-                const y = Math.max(0, Math.min(8192, Math.round(8192 - coord[1])));
+                const x = Math.max(extent[0], Math.min(extent[2], Math.round(coord[0])));
+                const y = Math.max(extent[1], Math.min(extent[3], Math.round(extent[3] - coord[1])));
                 return `${x}, ${y}`;
             },
             className: 'custom-mouse-position',
@@ -183,7 +140,7 @@ const map = new Map({
 map.getView().fit(extent, { padding: [50, 50, 50, 50] });
 
 // Load saved user layers from disk
-loadAndRenderUserLayers(map).then(() => {
+loadAndRenderUserLayers(map, CURRENT_MAP_ID).then(() => {
     console.log('User layers loaded from disk');
     renderLayerList(); // Update the layer list UI after loading
 }).catch(err => {
@@ -377,7 +334,7 @@ map.on('click', function (evt) {
                 const coords = (geometry as Point).getCoordinates();
                 // Transform to game coordinates for display
                 const gameX = Math.round(coords[0]);
-                const gameY = Math.round(8192 - coords[1]);
+                const gameY = Math.round(extent[3] - coords[1]);
                 featureInfoCoords.textContent = `${gameX}, ${gameY}`;
             } else {
                 featureInfoCoords.textContent = 'N/A'; // Or handle other geometry types
