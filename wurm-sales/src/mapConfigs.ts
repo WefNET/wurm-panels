@@ -33,13 +33,13 @@ export const MAPS: Record<string, MapConfig> = {
         id: 'xanadu',
         name: 'Xanadu',
         extent: [0, 0, 8192, 8192],
-        resolutions: [32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125],
+        resolutions: [32, 16, 8, 4, 2, 1, 0.5, 0.25], // 9 zoom levels, but only 7 real tile levels
         tileLayers: [
             {
                 id: 'terrain',
                 name: 'Terrain',
                 urlTemplate: 'https://pub-6192353739be4c3191140ad893e309f2.r2.dev/xanadu/2025/terrain/{z}/{x}/{y}.png',
-                zoomLevels: 7,
+                zoomLevels: 7, // Only tiles 0-6 exist, z7/z8 will scale z6 tiles
                 enabled: true,
                 opacity: 1.0
             },
