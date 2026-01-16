@@ -93,23 +93,23 @@ export const MAPS: Record<string, MapConfig> = {
             // Add starting locations for Independence
         ]
     },
-    // celebration: {
-    //     id: 'celebration',
-    //     name: 'Celebration',
-    //     extent: [0, 0, 4096, 4096], // Example: smaller map
-    //     resolutions: [16, 8, 4, 2, 1, 0.5, 0.25],
-    //     tileLayers: [
-    //         {
-    //             id: 'terrain',
-    //             name: 'Terrain',
-    //             urlTemplate: 'https://.../{z}/{x}/{y}.png',
-    //             zoomLevels: 6,
-    //             enabled: true,
-    //             opacity: 1.0
-    //         }
-    //     ],
-    //     startingLocations: []
-    // }
+    celebration: {
+        id: 'celebration',
+        name: 'Celebration',
+        extent: [0, 0, 2048, 2048], // Example: smaller map
+        resolutions: [8, 4, 2, 1, 0.5, 0.25],
+        tileLayers: [
+            {
+                id: 'terrain',
+                name: 'Terrain',
+                urlTemplate: 'https://pub-6192353739be4c3191140ad893e309f2.r2.dev/celebration/2025/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 5,
+                enabled: true,
+                opacity: 1.0
+            }
+        ],
+        startingLocations: []
+    }
 };
 
 /**
