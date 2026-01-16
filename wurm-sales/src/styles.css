@@ -157,6 +157,41 @@ button {
   background-color: #e6f3ff;
 }
 
+/* Map Selector Styles */
+#map-selector {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 8px 12px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 1002; /* Above layer manager */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#map-selector label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    margin: 0;
+}
+
+#map-select {
+    padding: 4px 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 14px;
+    cursor: pointer;
+    background: white;
+}
+
+#map-select:hover {
+    border-color: #999;
+}
+
 /* Layer Manager Styles */
 #layer-manager {
     position: absolute;

@@ -12,22 +12,32 @@ import VectorSource from 'ol/source/Vector';
 import Feature from 'ol/Feature';
 import { Point, Geometry } from 'ol/geom';
 import { Style, Stroke, Fill, Text, Circle as CircleStyle } from 'ol/style';
-import { addUserLayer, toggleUserLayer, getUserLayers, UserLayer, addFeatureToLayer, loadAndRenderUserLayers } from './userLayers';
+import { addUserLayer, toggleUserLayer, getUserLayers, UserLayer, addFeatureToLayer, loadAndRenderUserLayers, setCurrentMapId } from './userLayers';
 import { Draw } from 'ol/interaction';
-import { getMapConfig, MapConfig } from './mapConfigs';
+import { getMapConfig, getAllMaps } from './mapConfigs';
 
-// Get the current map configuration (default to Xanadu for now)
-// In the future, this will be determined by user selection
-const CURRENT_MAP_ID = 'xanadu';
-const mapConfig = getMapConfig(CURRENT_MAP_ID);
+// Global state
+let currentMapId = 'xanadu'; // Default map
+let map: Map;
+let drawInteraction: Draw | null = null;
+let selectedLayerForDrawing: string | null = null;
 
-if (!mapConfig) {
-    throw new Error(`Map configuration not found for: ${CURRENT_MAP_ID}`);
-}
+/**
+ * Initialize the map with a specific configuration
+ */
+function initializeMap(mapId: string) {
+    const mapConfig = getMapConfig(mapId);
+    
+    if (!mapConfig) {
+        throw new Error(`Map configuration not found for: ${mapId}`);
+    }
 
-// Use configuration values
-const extent = mapConfig.extent;
-const resolutions = mapConfig.resolutions;
+    currentMapId = mapId;
+    setCurrentMapId(mapId);
+
+    // Use configuration values
+    const extent = mapConfig.extent;
+    const resolutions = mapConfig.resolutions;
 
 const projection = new Projection({
     code: mapConfig.id.toUpperCase(),
@@ -134,28 +144,34 @@ const map = new Map({
         constrainResolution: true, // Snap to integer zoom levels
         // extent: extent // Removed to allow zooming out to see margin
     })
-});
+    });
 
-// Fit map to window initially
-map.getView().fit(extent, { padding: [50, 50, 50, 50] });
+    // Fit map to window initially
+    map.getView().fit(extent, { padding: [50, 50, 50, 50] });
 
-// Load saved user layers from disk
-loadAndRenderUserLayers(map, CURRENT_MAP_ID).then(() => {
-    console.log('User layers loaded from disk');
-    renderLayerList(); // Update the layer list UI after loading
-}).catch(err => {
-    console.error('Failed to load user layers:', err);
-});
+    // Zoom in one level from the "fit" view
+    const currentZoom = map.getView().getZoom();
+    if (currentZoom !== undefined) {
+        map.getView().setZoom(currentZoom + 1);
+    }
 
-// Zoom in one level from the "fit" view
-const currentZoom = map.getView().getZoom();
-if (currentZoom !== undefined) {
-    map.getView().setZoom(currentZoom + 1);
+    console.log(`${mapConfig.name} map initialized`, map);
+
+    // Load saved user layers from disk
+    loadAndRenderUserLayers(map, currentMapId).then(() => {
+        console.log('User layers loaded from disk');
+        renderLayerList(); // Update the layer list UI after loading
+    }).catch(err => {
+        console.error('Failed to load user layers:', err);
+    });
+
+    // Set up UI event handlers
+    setupUIHandlers(map);
+    
+    return map;
 }
 
-console.log('Xanadu map initialized', map);
-
-// --- UI Layer Manager ---
+// --- UI Elements ---
 const layerList = document.getElementById('layer-list') as HTMLUListElement;
 const newLayerNameInput = document.getElementById('new-layer-name') as HTMLInputElement;
 const addLayerBtn = document.getElementById('add-layer-btn') as HTMLButtonElement;
@@ -177,9 +193,69 @@ const featureIconSelect = document.getElementById('feature-icon-type') as HTMLSe
 const saveFeatureBtn = document.getElementById('save-feature-btn') as HTMLButtonElement;
 const cancelFeatureBtn = document.getElementById('cancel-feature-btn') as HTMLButtonElement;
 
+function setupUIHandlers(mapInstance: Map) {
+    // Set up layer manager event handlers
+    addLayerBtn.addEventListener('click', () => {
+        const name = newLayerNameInput.value.trim();
+        if (name) {
+            const newLayer: UserLayer = {
+                name: name,
+                visible: true,
+                features: []
+            };
+            addUserLayer(mapInstance, newLayer);
+            newLayerNameInput.value = '';
+            renderLayerList();
+        }
+    });
 
-let drawInteraction: Draw | null = null;
-let selectedLayerForDrawing: string | null = null;
+    drawPointBtn.addEventListener('click', () => {
+        if (!selectedLayerForDrawing) {
+            showModal('Please select a layer to draw on first.');
+            return;
+        }
+        startDrawing('Point', mapInstance);
+    });
+
+    // Feature info close button
+    featureInfoCloseBtn.addEventListener('click', () => {
+        featureInfoBox.style.display = 'none';
+    });
+
+    // Map click handler for feature info
+    mapInstance.on('click', function (evt) {
+        if (drawInteraction) return;
+
+        const feature = mapInstance.forEachFeatureAtPixel(evt.pixel, function (feature) {
+            return feature;
+        });
+
+        if (feature) {
+            const properties = feature.getProperties();
+            const geometry = feature.getGeometry();
+            const mapConfig = getMapConfig(currentMapId);
+            if (!mapConfig) return;
+            const extent = mapConfig.extent;
+
+            featureInfoName.textContent = properties.name || 'Unnamed Feature';
+            featureInfoDesc.textContent = properties.description || '';
+            featureInfoType.textContent = properties.icon || 'default';
+
+            if (geometry && geometry.getType() === 'Point') {
+                const coords = (geometry as Point).getCoordinates();
+                const gameX = Math.round(coords[0]);
+                const gameY = Math.round(extent[3] - coords[1]);
+                featureInfoCoords.textContent = `${gameX}, ${gameY}`;
+            } else {
+                featureInfoCoords.textContent = 'N/A';
+            }
+
+            featureInfoBox.style.display = 'block';
+        } else {
+            featureInfoBox.style.display = 'none';
+        }
+    });
+}
 
 function renderLayerList() {
     if (!layerList) return;
@@ -218,37 +294,20 @@ function renderLayerList() {
     });
 }
 
-addLayerBtn.addEventListener('click', () => {
-    const name = newLayerNameInput.value.trim();
-    if (name) {
-        const newLayer: UserLayer = {
-            name: name,
-            visible: true,
-            features: [] // Start with an empty layer
-        };
-        addUserLayer(map, newLayer);
-        newLayerNameInput.value = ''; // Clear input
-        renderLayerList(); // Update UI
-    }
-});
+// Helper function to show modal message
+function showModal(message: string) {
+    alert(message);
+}
 
-drawPointBtn.addEventListener('click', () => {
-    if (!selectedLayerForDrawing) {
-        alert('Please select a layer to draw on first.');
-        return;
-    }
-    startDrawing('Point');
-});
-
-function startDrawing(type: 'Point' | 'LineString' | 'Polygon') {
+function startDrawing(type: 'Point' | 'LineString' | 'Polygon', mapInstance: Map) {
     if (drawInteraction) {
-        map.removeInteraction(drawInteraction);
+        mapInstance.removeInteraction(drawInteraction);
     }
 
     const targetLayerName = selectedLayerForDrawing;
     if (!targetLayerName) return;
 
-    const olLayer = map.getLayers().getArray().find(l => l.get('name') === targetLayerName) as VectorLayer<VectorSource<Feature<Geometry>>>;
+    const olLayer = mapInstance.getLayers().getArray().find(l => l.get('name') === targetLayerName) as VectorLayer<VectorSource<Feature<Geometry>>>;
     const source = olLayer.getSource();
     if (!source) return;
 
@@ -261,7 +320,6 @@ function startDrawing(type: 'Point' | 'LineString' | 'Polygon') {
         const feature = event.feature;
         const geometry = feature.getGeometry();
         if (geometry) {
-            // Show the modal instead of the prompt
             addFeatureModal.style.display = 'block';
 
             const saveHandler = () => {
@@ -270,7 +328,7 @@ function startDrawing(type: 'Point' | 'LineString' | 'Polygon') {
                 const featureDesc = featureDescTextarea.value;
                 const iconType = featureIconSelect.value;
 
-                addFeatureToLayer(map, targetLayerName, {
+                addFeatureToLayer(mapInstance, targetLayerName, {
                     type: 'Point',
                     coordinates: coords,
                     properties: {
@@ -280,7 +338,6 @@ function startDrawing(type: 'Point' | 'LineString' | 'Polygon') {
                     },
                 });
 
-                // Clean up and close modal
                 addFeatureModal.style.display = 'none';
                 featureNameInput.value = '';
                 featureDescTextarea.value = '';
@@ -291,7 +348,6 @@ function startDrawing(type: 'Point' | 'LineString' | 'Polygon') {
             const cancelHandler = () => {
                 addFeatureModal.style.display = 'none';
                 cancelFeatureBtn.removeEventListener('click', cancelHandler);
-                // If canceled, remove the feature that was temporarily drawn
                 const source = olLayer.getSource();
                 if (source) {
                     source.removeFeature(feature);
@@ -301,55 +357,59 @@ function startDrawing(type: 'Point' | 'LineString' | 'Polygon') {
             saveFeatureBtn.addEventListener('click', saveHandler, { once: true });
             cancelFeatureBtn.addEventListener('click', cancelHandler, { once: true });
         }
-        map.removeInteraction(drawInteraction!);
+        mapInstance.removeInteraction(drawInteraction!);
         drawInteraction = null;
     });
 
-    map.addInteraction(drawInteraction);
+    mapInstance.addInteraction(drawInteraction);
 }
 
-// --- Map Click Interaction ---
-map.on('click', function (evt) {
-    // If drawing, don't show info box
-    if (drawInteraction) {
-        return;
-    }
+// Populate map selector dropdown
+function populateMapSelector() {
+    const mapSelect = document.getElementById('map-select') as HTMLSelectElement;
+    if (!mapSelect) return;
 
-    const feature = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
-        return feature;
+    const maps = getAllMaps();
+    mapSelect.innerHTML = '';
+    
+    maps.forEach(mapConfig => {
+        const option = document.createElement('option');
+        option.value = mapConfig.id;
+        option.textContent = mapConfig.name;
+        if (mapConfig.id === currentMapId) {
+            option.selected = true;
+        }
+        mapSelect.appendChild(option);
     });
 
-    if (feature) {
-        const properties = feature.getProperties();
-        const geometry = feature.getGeometry();
-
-        featureInfoName.textContent = properties.name || 'Unnamed Feature';
-        featureInfoDesc.textContent = properties.description || '';
-        featureInfoType.textContent = properties.icon || 'default';
-
-        if (geometry) {
-            const type = geometry.getType();
-
-            if (type === 'Point') {
-                const coords = (geometry as Point).getCoordinates();
-                // Transform to game coordinates for display
-                const gameX = Math.round(coords[0]);
-                const gameY = Math.round(extent[3] - coords[1]);
-                featureInfoCoords.textContent = `${gameX}, ${gameY}`;
-            } else {
-                featureInfoCoords.textContent = 'N/A'; // Or handle other geometry types
-            }
+    mapSelect.addEventListener('change', (e) => {
+        const newMapId = (e.target as HTMLSelectElement).value;
+        if (newMapId && newMapId !== currentMapId) {
+            switchMap(newMapId);
         }
+    });
+}
 
-        featureInfoBox.style.display = 'block';
-    } else {
-        featureInfoBox.style.display = 'none';
+// Switch to a different map
+function switchMap(newMapId: string) {
+    // Dispose of current map
+    if (map) {
+        map.setTarget(undefined);
+        map.dispose();
     }
-});
 
-featureInfoCloseBtn.addEventListener('click', () => {
-    featureInfoBox.style.display = 'none';
-});
+    // Remove draw interaction if active
+    if (drawInteraction) {
+        drawInteraction = null;
+    }
 
-// Initial render of the layer list
-renderLayerList();
+    // Reset selected layer
+    selectedLayerForDrawing = null;
+
+    // Initialize new map
+    map = initializeMap(newMapId);
+}
+
+// Initialize on page load
+map = initializeMap('xanadu');
+populateMapSelector();
