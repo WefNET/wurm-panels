@@ -38,13 +38,13 @@ export const MAPS: Record<string, MapConfig> = {
         id: 'xanadu',
         name: 'Xanadu',
         extent: [0, 0, 8192, 8192],
-        resolutions: [32, 16, 8, 4, 2, 1, 0.5, 0.25], // 9 zoom levels, but only 7 real tile levels
+        resolutions: [32, 16, 8, 4, 2, 1, 0.5, 0.25], // 8 zoom levels with virtual zooming
         tileLayers: [
             {
                 id: 'terrain',
                 name: 'Terrain',
-                urlTemplate: 'https://pub-6192353739be4c3191140ad893e309f2.r2.dev/xanadu/2025/terrain/{z}/{x}/{y}.png',
-                zoomLevels: 7, // Only tiles 0-6 exist, z7/z8 will scale z6 tiles
+                urlTemplate: 'https://red-river-af03.john-wefler.workers.dev/tiles/xanadu/2025/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 6, // Max zoom level 5 for real tiles, higher levels scale z=5
                 enabled: true,
                 opacity: 1.0,
                 mapType: "terrain",
@@ -85,13 +85,13 @@ export const MAPS: Record<string, MapConfig> = {
         id: 'independence',
         name: 'Independence',
         extent: [0, 0, 4096, 4096],
-        resolutions: [16, 8, 4, 2, 1, 0.5, 0.25], // 7 zoom levels total
+        resolutions: [16, 8, 4, 2, 1, 0.5, 0.25], // 7 zoom levels with virtual zooming
         tileLayers: [
             {
                 id: 'terrain',
                 name: 'Terrain',
-                urlTemplate: 'https://pub-6192353739be4c3191140ad893e309f2.r2.dev/independence/2025/terrain/{z}/{x}/{y}.png',
-                zoomLevels: 6, // Only tiles 0-5 exist, z6 will scale z5 tiles
+                urlTemplate: 'https://red-river-af03.john-wefler.workers.dev/tiles/independence/2025/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 5, // Max zoom level 4 for real tiles, higher levels scale z=4
                 enabled: true,
                 opacity: 1.0,
                 mapType: "terrain",
@@ -106,13 +106,13 @@ export const MAPS: Record<string, MapConfig> = {
         id: 'celebration',
         name: 'Celebration',
         extent: [0, 0, 2048, 2048], // Example: smaller map
-        resolutions: [8, 4, 2, 1, 0.5, 0.25],
+        resolutions: [8, 4, 2, 1, 0.5, 0.25], // 6 zoom levels with virtual zooming
         tileLayers: [
             {
                 id: 'terrain',
                 name: 'Terrain',
-                urlTemplate: 'https://pub-6192353739be4c3191140ad893e309f2.r2.dev/celebration/2025/terrain/{z}/{x}/{y}.png',
-                zoomLevels: 5,
+                urlTemplate: 'https://red-river-af03.john-wefler.workers.dev/tiles/celebration/2025/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
                 enabled: true,
                 opacity: 1.0,
                 mapType: "terrain",
