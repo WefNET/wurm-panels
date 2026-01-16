@@ -1,6 +1,9 @@
 /**
  * Configuration for tile layers within a map.
  */
+/**
+ * Configuration for tile layers within a map.
+ */
 export interface TileLayerConfig {
     id: string;
     name: string;
@@ -8,6 +11,8 @@ export interface TileLayerConfig {
     zoomLevels: number; // Number of zoom levels (e.g., 7 for z0-z6)
     enabled: boolean; // Default visibility
     opacity?: number; // Optional opacity (0-1)
+    mapType: 'terrain' | 'topological';
+    year: number;
 }
 
 /**
@@ -41,7 +46,9 @@ export const MAPS: Record<string, MapConfig> = {
                 urlTemplate: 'https://pub-6192353739be4c3191140ad893e309f2.r2.dev/xanadu/2025/terrain/{z}/{x}/{y}.png',
                 zoomLevels: 7, // Only tiles 0-6 exist, z7/z8 will scale z6 tiles
                 enabled: true,
-                opacity: 1.0
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2025
             },
             // Add more tile layers here as they become available
             // {
@@ -86,7 +93,9 @@ export const MAPS: Record<string, MapConfig> = {
                 urlTemplate: 'https://pub-6192353739be4c3191140ad893e309f2.r2.dev/independence/2025/terrain/{z}/{x}/{y}.png',
                 zoomLevels: 6, // Only tiles 0-5 exist, z6 will scale z5 tiles
                 enabled: true,
-                opacity: 1.0
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2025
             }
         ],
         startingLocations: [
@@ -105,7 +114,9 @@ export const MAPS: Record<string, MapConfig> = {
                 urlTemplate: 'https://pub-6192353739be4c3191140ad893e309f2.r2.dev/celebration/2025/terrain/{z}/{x}/{y}.png',
                 zoomLevels: 5,
                 enabled: true,
-                opacity: 1.0
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2025
             }
         ],
         startingLocations: []

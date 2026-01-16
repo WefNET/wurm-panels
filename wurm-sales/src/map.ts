@@ -27,7 +27,7 @@ let selectedLayerForDrawing: string | null = null;
  */
 function initializeMap(mapId: string) {
     const mapConfig = getMapConfig(mapId);
-    
+
     if (!mapConfig) {
         throw new Error(`Map configuration not found for: ${mapId}`);
     }
@@ -39,111 +39,111 @@ function initializeMap(mapId: string) {
     const extent = mapConfig.extent;
     const resolutions = mapConfig.resolutions;
 
-const projection = new Projection({
-    code: mapConfig.id.toUpperCase(),
-    units: 'pixels',
-    extent: extent
-});
-
-const tileGrid = new TileGrid({
-    extent: extent,
-    origin: [0, extent[3]], // Top-left origin (dynamic based on extent)
-    tileSize: 256,
-    resolutions: resolutions.slice(0, mapConfig.tileLayers[0].zoomLevels)
-});
-
-// Create tile layers from configuration
-const terrainLayer = mapConfig.tileLayers[0]; // Get the first (terrain) layer
-const layer = new TileLayer({
-    source: new XYZ({
-        projection: projection,
-        tileGrid: tileGrid,
-        tileUrlFunction: (tileCoord) => {
-            if (!tileCoord) return undefined;
-
-            const z = tileCoord[0];
-            const x = tileCoord[1];
-            const y = tileCoord[2];
-
-            // XYZ tiles: Y=0 is at the top, which matches OpenLayers' top-left origin
-            // No flipping needed!
-
-            const url = terrainLayer.urlTemplate
-                .replace('{z}', z.toString())
-                .replace('{x}', x.toString())
-                .replace('{y}', y.toString());
-            return url;
-        },
-        crossOrigin: 'anonymous',
-        tileSize: 256
-    }),
-    opacity: terrainLayer.opacity || 1.0,
-    visible: terrainLayer.enabled
-});
-
-// Create starting location features from config
-const startingLocationFeatures = (mapConfig.startingLocations || []).map(location => {
-    // Convert game coordinates (Y up) to map coordinates (Y down from top-left)
-    const x = location.coords[0];
-    const y = extent[3] - location.coords[1]; // Use extent height for flipping
-
-    const feature = new Feature({
-        geometry: new Point([x, y]),
-        name: location.name
+    const projection = new Projection({
+        code: mapConfig.id.toUpperCase(),
+        units: 'pixels',
+        extent: extent
     });
 
-    feature.setStyle(new Style({
-        image: new CircleStyle({
-            radius: 8,
-            fill: new Fill({ color: 'rgba(255, 215, 0, 0.6)' }),
-            stroke: new Stroke({ color: '#FFD700', width: 2 })
-        }),
-        text: new Text({
-            text: location.name,
-            font: '14px Calibri,sans-serif',
-            fill: new Fill({ color: '#fff' }),
-            stroke: new Stroke({
-                color: '#000',
-                width: 3
-            }),
-            offsetY: -20
-        })
-    }));
+    const tileGrid = new TileGrid({
+        extent: extent,
+        origin: [0, extent[3]], // Top-left origin (dynamic based on extent)
+        tileSize: 256,
+        resolutions: resolutions.slice(0, mapConfig.tileLayers[0].zoomLevels)
+    });
 
-    return feature;
-});
+    // Create tile layers from configuration
+    const terrainLayer = mapConfig.tileLayers[0]; // Get the first (terrain) layer
+    const layer = new TileLayer({
+        source: new XYZ({
+            projection: projection,
+            tileGrid: tileGrid,
+            tileUrlFunction: (tileCoord) => {
+                if (!tileCoord) return undefined;
 
-const vectorLayer = new VectorLayer({
-    source: new VectorSource({
-        features: startingLocationFeatures
-    }),
-    properties: {
-        'willReadFrequently': true
-    }
-});
+                const z = tileCoord[0];
+                const x = tileCoord[1];
+                const y = tileCoord[2];
 
-const map = new Map({
-    target: 'map',  // id of your HTML element
-    layers: [layer, vectorLayer],
-    controls: defaultControls().extend([
-        new MousePosition({
-            coordinateFormat: (coord) => {
-                if (!coord) return '';
-                const x = Math.max(extent[0], Math.min(extent[2], Math.round(coord[0])));
-                const y = Math.max(extent[1], Math.min(extent[3], Math.round(extent[3] - coord[1])));
-                return `${x}, ${y}`;
+                // XYZ tiles: Y=0 is at the top, which matches OpenLayers' top-left origin
+                // No flipping needed!
+
+                const url = terrainLayer.urlTemplate
+                    .replace('{z}', z.toString())
+                    .replace('{x}', x.toString())
+                    .replace('{y}', y.toString());
+                return url;
             },
-            className: 'custom-mouse-position',
+            crossOrigin: 'anonymous',
+            tileSize: 256
+        }),
+        opacity: terrainLayer.opacity || 1.0,
+        visible: terrainLayer.enabled
+    });
+
+    // Create starting location features from config
+    const startingLocationFeatures = (mapConfig.startingLocations || []).map(location => {
+        // Convert game coordinates (Y up) to map coordinates (Y down from top-left)
+        const x = location.coords[0];
+        const y = extent[3] - location.coords[1]; // Use extent height for flipping
+
+        const feature = new Feature({
+            geometry: new Point([x, y]),
+            name: location.name
+        });
+
+        feature.setStyle(new Style({
+            image: new CircleStyle({
+                radius: 8,
+                fill: new Fill({ color: 'rgba(255, 215, 0, 0.6)' }),
+                stroke: new Stroke({ color: '#FFD700', width: 2 })
+            }),
+            text: new Text({
+                text: location.name,
+                font: '14px Calibri,sans-serif',
+                fill: new Fill({ color: '#fff' }),
+                stroke: new Stroke({
+                    color: '#000',
+                    width: 3
+                }),
+                offsetY: -20
+            })
+        }));
+
+        return feature;
+    });
+
+    const vectorLayer = new VectorLayer({
+        source: new VectorSource({
+            features: startingLocationFeatures
+        }),
+        properties: {
+            'willReadFrequently': true
+        }
+    });
+
+    const map = new Map({
+        target: 'map',  // id of your HTML element
+        layers: [layer, vectorLayer],
+        controls: defaultControls().extend([
+            new MousePosition({
+                coordinateFormat: (coord) => {
+                    if (!coord) return '';
+                    const x = Math.max(extent[0], Math.min(extent[2], Math.round(coord[0])));
+                    const y = Math.max(extent[1], Math.min(extent[3], Math.round(extent[3] - coord[1])));
+                    return `${x}, ${y}`;
+                },
+                className: 'custom-mouse-position',
+            })
+        ]),
+        view: new View({
+            projection: projection,
+            center: [4096, 4096],  // center of your image
+            resolutions: resolutions, // Use explicit resolutions for z0-z8
+            zoom: 2,
+            constrainResolution: true, // Snap to integer zoom levels
+            // extent: extent // Removed to allow zooming out to see margin
         })
-    ]),
-    view: new View({
-        projection: projection,
-        center: [4096, 4096],  // center of your image
-        resolutions: resolutions, // Use explicit resolutions for z0-z8
-        zoom: 2,
-        constrainResolution: true, // Snap to integer zoom levels
-        // extent: extent // Removed to allow zooming out to see margin
-    })
     });
 
 
@@ -361,28 +361,124 @@ function startDrawing(type: 'Point' | 'LineString' | 'Polygon', mapInstance: Map
 
 // Populate map selector dropdown
 function populateMapSelector() {
-    const mapSelect = document.getElementById('map-select') as HTMLSelectElement;
-    if (!mapSelect) return;
+    const islandSelect = document.getElementById('island-select') as HTMLSelectElement;
+    const yearSelect = document.getElementById('year-select') as HTMLSelectElement;
+    const typeSelect = document.getElementById('type-select') as HTMLSelectElement;
+    if (!islandSelect || !yearSelect || !typeSelect) return;
 
     const maps = getAllMaps();
-    mapSelect.innerHTML = '';
-    
-    maps.forEach(mapConfig => {
+    // Get unique islands
+    const islands = Array.from(new Set(maps.map(m => m.name)));
+    islandSelect.innerHTML = '';
+    islands.forEach(island => {
         const option = document.createElement('option');
-        option.value = mapConfig.id;
-        option.textContent = mapConfig.name;
-        if (mapConfig.id === currentMapId) {
-            option.selected = true;
-        }
-        mapSelect.appendChild(option);
+        option.value = island;
+        option.textContent = island;
+        islandSelect.appendChild(option);
     });
 
-    mapSelect.addEventListener('change', (e) => {
-        const newMapId = (e.target as HTMLSelectElement).value;
-        if (newMapId && newMapId !== currentMapId) {
-            switchMap(newMapId);
-        }
+    // Helper to get years for selected island
+    function getYearsForIsland(island: string) {
+        const map = maps.find(m => m.name === island);
+        if (!map) return [];
+        return Array.from(new Set(map.tileLayers.map(tl => tl.year))).sort((a, b) => b - a);
+    }
+    // Helper to get map types for selected island/year
+    function getTypesForIslandYear(island: string, year: number) {
+        const map = maps.find(m => m.name === island);
+        if (!map) return [];
+        return map.tileLayers.filter(tl => tl.year === year).map(tl => tl.mapType);
+    }
+    // Helper to get mapId for selection
+    function getMapId(island: string) {
+        return maps.find(m => m.name === island)?.id;
+    }
+    // Helper to get tileLayer for selection
+    function getTileLayer(map: any, year: number, mapType: string) {
+        return map?.tileLayers.find((tl: { year: number; mapType: string; }) => tl.year === year && tl.mapType === mapType);
+    }
+
+    // Set initial selection
+    let selectedIsland = islands[0];
+    let years = getYearsForIsland(selectedIsland);
+    let selectedYear = years[0];
+    let types = getTypesForIslandYear(selectedIsland, selectedYear);
+    let selectedType = types[0];
+
+    function updateYearSelect() {
+        years = getYearsForIsland(selectedIsland);
+        yearSelect.innerHTML = '';
+        years.forEach(year => {
+            const option = document.createElement('option');
+            option.value = year.toString();
+            option.textContent = year.toString();
+            yearSelect.appendChild(option);
+        });
+        selectedYear = years[0];
+    }
+    function updateTypeSelect() {
+        types = getTypesForIslandYear(selectedIsland, selectedYear);
+        typeSelect.innerHTML = '';
+        types.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+            typeSelect.appendChild(option);
+        });
+        selectedType = types[0];
+    }
+
+    // Initial population
+    updateYearSelect();
+    updateTypeSelect();
+
+    // Set current selection if possible
+    const currentMap = maps.find(m => m.id === currentMapId);
+    if (currentMap) {
+        selectedIsland = currentMap.name;
+        years = getYearsForIsland(selectedIsland);
+        selectedYear = years[0];
+        types = getTypesForIslandYear(selectedIsland, selectedYear);
+        selectedType = types[0];
+        islandSelect.value = selectedIsland;
+        updateYearSelect();
+        yearSelect.value = selectedYear.toString();
+        updateTypeSelect();
+        typeSelect.value = selectedType;
+    }
+
+    islandSelect.addEventListener('change', () => {
+        selectedIsland = islandSelect.value;
+        updateYearSelect();
+        selectedYear = parseInt(yearSelect.value, 10);
+        updateTypeSelect();
+        selectedType = typeSelect.value as "terrain" | "topological";
+        switchToSelectedMap();
     });
+    yearSelect.addEventListener('change', () => {
+        selectedYear = parseInt(yearSelect.value, 10);
+        updateTypeSelect();
+        selectedType = typeSelect.value as "terrain" | "topological";
+        switchToSelectedMap();
+    });
+    typeSelect.addEventListener('change', () => {
+        selectedType = typeSelect.value as "terrain" | "topological";
+        switchToSelectedMap();
+    });
+
+    function switchToSelectedMap() {
+        const map = maps.find(m => m.name === selectedIsland);
+        const tileLayer = getTileLayer(map, selectedYear, selectedType);
+        if (map && tileLayer) {
+            // If the map is not already loaded, switch
+            if (map.id !== currentMapId) {
+                switchMap(map.id);
+            } else {
+                // If the map is already loaded, just switch tile layer
+                // (implement tile layer switching logic here if needed)
+            }
+        }
+    }
 }
 
 // Switch to a different map
