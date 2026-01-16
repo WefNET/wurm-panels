@@ -517,7 +517,7 @@ fn main() {
             };
             let open_map = {
                 let item = MenuItem::new(app, "open_map", true, None::<&str>)?;
-                item.set_text("Xanadu Map")?;
+                item.set_text("Maps")?;
                 item
             };
             let open_settings = {
