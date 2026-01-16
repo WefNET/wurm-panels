@@ -185,6 +185,7 @@ map.getView().fit(extent, { padding: [50, 50, 50, 50] });
 // Load saved user layers from disk
 loadAndRenderUserLayers(map).then(() => {
     console.log('User layers loaded from disk');
+    renderLayerList(); // Update the layer list UI after loading
 }).catch(err => {
     console.error('Failed to load user layers:', err);
 });
