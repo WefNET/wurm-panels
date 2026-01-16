@@ -80,7 +80,7 @@ const tileGrid = new TileGrid({
     extent: extent,
     origin: [0, 8192], // Top-left origin
     tileSize: 256,
-    resolutions: resolutions.slice(0, 6) // Only up to z5 exist as tiles
+    resolutions: resolutions.slice(0, 7) // z0-z6 (7 levels: 0,1,2,3,4,5,6)
 });
 
 const layer = new TileLayer({
@@ -94,23 +94,10 @@ const layer = new TileLayer({
             const x = tileCoord[1];
             const y = tileCoord[2];
 
-            // OpenLayers with Top-Left origin gives y=0 at top.
-            // If your tiles are TMS (gdal2tiles default sometimes), 0.png is at the bottom.
-            // We need to flip the Y coordinate to match the file structure.
+            // XYZ tiles: Y=0 is at the top, which matches OpenLayers' top-left origin
+            // No flipping needed!
 
-            // Calculate how many tiles high the map is at this zoom level
-            // For z=0 (res 32): 8192 / (32 * 256) = 1 tile high
-            // For z=5 (res 1): 8192 / (1 * 256) = 32 tiles high
-            const res = tileGrid.getResolution(z);
-            if (res === undefined) return undefined;
-
-            const matrixHeight = Math.ceil(8192 / (res * 256));
-
-            // If y=0 (Top in OL), we want the highest file index (Top in TMS) -> MatrixHeight - 1
-            // If y=Max (Bottom in OL), we want 0 (Bottom in TMS)
-            const yFlipped = matrixHeight - 1 - y;
-
-            const url = `https://pub-6192353739be4c3191140ad893e309f2.r2.dev/xanadu/2025/terrain/${z}/${x}/${yFlipped}.png`;
+            const url = `https://pub-6192353739be4c3191140ad893e309f2.r2.dev/xanadu/2025/terrain/${z}/${x}/${y}.png`;
             return url;
         },
         crossOrigin: 'anonymous',
