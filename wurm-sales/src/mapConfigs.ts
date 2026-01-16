@@ -78,13 +78,13 @@ export const MAPS: Record<string, MapConfig> = {
         id: 'independence',
         name: 'Independence',
         extent: [0, 0, 4096, 4096],
-        resolutions: [16, 8, 4, 2, 1, 0.5, 0.25],
+        resolutions: [16, 8, 4, 2, 1, 0.5, 0.25], // 7 zoom levels total
         tileLayers: [
             {
                 id: 'terrain',
                 name: 'Terrain',
                 urlTemplate: 'https://pub-6192353739be4c3191140ad893e309f2.r2.dev/independence/2025/terrain/{z}/{x}/{y}.png',
-                zoomLevels: 7,
+                zoomLevels: 6, // Only tiles 0-5 exist, z6 will scale z5 tiles
                 enabled: true,
                 opacity: 1.0
             }

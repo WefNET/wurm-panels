@@ -211,7 +211,7 @@ function setupUIHandlers(mapInstance: Map) {
 
     drawPointBtn.addEventListener('click', () => {
         if (!selectedLayerForDrawing) {
-            showModal('Please select a layer to draw on first.');
+            // Just return without showing a message - user will learn to select a layer
             return;
         }
         startDrawing('Point', mapInstance);
@@ -292,11 +292,6 @@ function renderLayerList() {
         listItem.appendChild(label);
         layerList.appendChild(listItem);
     });
-}
-
-// Helper function to show modal message
-function showModal(message: string) {
-    alert(message);
 }
 
 function startDrawing(type: 'Point' | 'LineString' | 'Polygon', mapInstance: Map) {
@@ -405,6 +400,16 @@ function switchMap(newMapId: string) {
 
     // Reset selected layer
     selectedLayerForDrawing = null;
+
+    // Clear the layer list UI
+    if (layerList) {
+        layerList.innerHTML = '';
+    }
+
+    // Hide feature info box
+    if (featureInfoBox) {
+        featureInfoBox.style.display = 'none';
+    }
 
     // Initialize new map
     map = initializeMap(newMapId);
