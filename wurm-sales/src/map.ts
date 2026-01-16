@@ -190,35 +190,6 @@ loadAndRenderUserLayers(map).then(() => {
     console.error('Failed to load user layers:', err);
 });
 
-// Add a sample user layer for demonstration (commented out since we now load from disk)
-/*
-addUserLayer(map, {
-    name: 'My Points of Interest',
-    visible: true,
-    features: [
-        {
-            type: 'Point',
-            coordinates: [4096, 4096], // Center of the map
-            properties: {
-                name: 'Central Tower',
-                description: 'A mysterious tower in the center of the world.'
-            }
-        }
-    ]
-});
-*/
-
-// Example of how to toggle the layer (e.g., from a button click)
-// For now, we can log it to the console.
-/*
-console.log("Toggling 'My Points of Interest' layer off in 5 seconds...");
-setTimeout(() => {
-    toggleUserLayer(map, 'My Points of Interest');
-    console.log("Layer toggled. Check the map.");
-}, 5000);
-*/
-
-
 // Zoom in one level from the "fit" view
 const currentZoom = map.getView().getZoom();
 if (currentZoom !== undefined) {

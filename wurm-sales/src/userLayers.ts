@@ -41,13 +41,30 @@ export interface UserLayer {
 
 // In-memory store for layers for now. We will integrate with Tauri later.
 let userLayers: UserLayer[] = [];
+let currentMapId: string = 'xanadu'; // Default map
+
+/**
+ * Sets the current map ID for persistence operations.
+ * @param mapId The map identifier (e.g., 'xanadu', 'independence')
+ */
+export function setCurrentMapId(mapId: string) {
+    currentMapId = mapId;
+}
+
+/**
+ * Gets the current map ID.
+ * @returns The current map identifier
+ */
+export function getCurrentMapId(): string {
+    return currentMapId;
+}
 
 /**
  * Saves all current user layers to disk via Tauri.
  */
 async function persistUserLayers() {
     try {
-        await invoke('save_user_layers', { layers: userLayers });
+        await invoke('save_user_layers', { mapId: currentMapId, layers: userLayers });
         console.log('User layers saved.');
     } catch (error) {
         console.error('Failed to save user layers:', error);
@@ -317,18 +334,23 @@ export function importUserLayers(geojson: string) {
 /**
  * Loads user layers from disk via Tauri and adds them to the map.
  * @param map The OpenLayers map instance.
+ * @param mapId Optional map ID to load. If not provided, uses currentMapId.
  */
-export async function loadAndRenderUserLayers(map: Map) {
+export async function loadAndRenderUserLayers(map: Map, mapId?: string) {
+    if (mapId) {
+        currentMapId = mapId;
+    }
+
     try {
-        const loadedLayers = await invoke('load_user_layers') as UserLayer[];
+        const loadedLayers = await invoke('load_user_layers', { mapId: currentMapId }) as UserLayer[];
         userLayers = loadedLayers; // Overwrite the in-memory store
-        console.log('Loaded user layers:', userLayers);
+        console.log(`Loaded user layers for map '${currentMapId}':`, userLayers);
 
         // Clear existing user layers from the map before adding new ones
         map.getLayers().getArray()
             .filter(layer => layer.get('name') && userLayers.some(ul => ul.name === layer.get('name')))
             .forEach(layer => map.removeLayer(layer));
-        
+
         // Add the loaded layers to the map
         userLayers.forEach(layerData => {
             const olLayer = createOLLayer(layerData);

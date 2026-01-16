@@ -31,19 +31,22 @@ pub struct UserLayer {
     pub visible: bool,
 }
 
-pub const USER_LAYERS_FILE_NAME: &str = "user_layers.json";
-
 fn config_dir_path() -> Result<PathBuf, String> {
     directories::ProjectDirs::from("com", "WefNET", "wurm-sales")
         .map(|dirs| dirs.config_dir().to_path_buf())
         .ok_or_else(|| "Unable to resolve configuration directory".to_string())
 }
 
+fn get_layers_file_name(map_id: &str) -> String {
+    format!("user_layers_{}.json", map_id)
+}
+
 #[tauri::command]
-pub fn load_user_layers() -> Result<Vec<UserLayer>, String> {
+pub fn load_user_layers(map_id: String) -> Result<Vec<UserLayer>, String> {
     match config_dir_path() {
         Ok(config_dir) => {
-            let layers_path = config_dir.join(USER_LAYERS_FILE_NAME);
+            let file_name = get_layers_file_name(&map_id);
+            let layers_path = config_dir.join(&file_name);
             if layers_path.exists() {
                 let raw = fs::read_to_string(&layers_path)
                     .map_err(|e| format!("Failed to read user_layers.json: {}", e))?;
@@ -53,7 +56,7 @@ pub fn load_user_layers() -> Result<Vec<UserLayer>, String> {
                 }
 
                 serde_json::from_str::<Vec<UserLayer>>(&raw)
-                    .map_err(|e| format!("Failed to deserialize user layers: {}", e))
+                    .map_err(|e| format!("Failed to deserialize user layers for map '{}': {}", map_id, e))
             } else {
                 Ok(Vec::new()) // File doesn't exist, return empty list
             }
@@ -63,7 +66,7 @@ pub fn load_user_layers() -> Result<Vec<UserLayer>, String> {
 }
 
 #[tauri::command]
-pub fn save_user_layers(layers: Vec<UserLayer>) -> Result<(), String> {
+pub fn save_user_layers(map_id: String, layers: Vec<UserLayer>) -> Result<(), String> {
     let config_dir = config_dir_path()?;
 
     if !config_dir.exists() {
@@ -71,7 +74,8 @@ pub fn save_user_layers(layers: Vec<UserLayer>) -> Result<(), String> {
             .map_err(|e| format!("Failed to create config directory: {}", e))?;
     }
 
-    let layers_path = config_dir.join(USER_LAYERS_FILE_NAME);
+    let file_name = get_layers_file_name(&map_id);
+    let layers_path = config_dir.join(&file_name);
     let serialized = serde_json::to_string_pretty(&layers)
         .map_err(|e| format!("Failed to serialize user layers: {}", e))?;
 

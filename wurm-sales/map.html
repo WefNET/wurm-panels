@@ -8,7 +8,8 @@
     <title>Xanadu Map</title>
     <script type="module" src="/src/map.ts" defer></script>
     <style>
-        body, html {
+        body,
+        html {
             margin: 0;
             padding: 0;
             height: 100%;
@@ -77,10 +78,10 @@
             <h3>Add New Feature</h3>
             <label for="feature-name">Name:</label>
             <input type="text" id="feature-name" placeholder="e.g., My House">
-            
+
             <label for="feature-desc">Description:</label>
             <textarea id="feature-desc" placeholder="A cozy little spot."></textarea>
-            
+
             <label for="feature-icon-type">Icon Type:</label>
             <select id="feature-icon-type">
                 <option value="default">Default</option>
@@ -88,7 +89,7 @@
                 <option value="mine">Mine</option>
                 <option value="cave">Cave</option>
             </select>
-            
+
             <div class="modal-buttons">
                 <button id="save-feature-btn">Save</button>
                 <button id="cancel-feature-btn">Cancel</button>
