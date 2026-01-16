@@ -146,13 +146,28 @@ const map = new Map({
     })
     });
 
-    // Fit map to window initially
-    map.getView().fit(extent, { padding: [50, 50, 50, 50] });
 
-    // Zoom in one level from the "fit" view
-    const currentZoom = map.getView().getZoom();
-    if (currentZoom !== undefined) {
-        map.getView().setZoom(currentZoom + 1);
+    // Try to restore last view state for this map
+    const viewStateKey = `wurm-map-view-${mapId}`;
+    const savedView = localStorage.getItem(viewStateKey);
+    if (savedView) {
+        try {
+            const { center, zoom } = JSON.parse(savedView);
+            if (center && zoom !== undefined) {
+                map.getView().setCenter(center);
+                map.getView().setZoom(zoom);
+            }
+        } catch (e) {
+            // Ignore parse errors
+        }
+    } else {
+        // Fit map to window initially
+        map.getView().fit(extent, { padding: [50, 50, 50, 50] });
+        // Zoom in one level from the "fit" view
+        const currentZoom = map.getView().getZoom();
+        if (currentZoom !== undefined) {
+            map.getView().setZoom(currentZoom + 1);
+        }
     }
 
     console.log(`${mapConfig.name} map initialized`, map);
@@ -167,7 +182,18 @@ const map = new Map({
 
     // Set up UI event handlers
     setupUIHandlers(map);
-    
+
+    // Save view state on moveend
+    map.getView().on('change:center', saveViewState);
+    map.getView().on('change:resolution', saveViewState);
+    function saveViewState() {
+        const center = map.getView().getCenter();
+        const zoom = map.getView().getZoom();
+        if (center && zoom !== undefined) {
+            localStorage.setItem(viewStateKey, JSON.stringify({ center, zoom }));
+        }
+    }
+
     return map;
 }
 
