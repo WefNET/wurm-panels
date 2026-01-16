@@ -28,9 +28,11 @@ use std::sync::{
 use tauri::{
     menu::{MenuBuilder, MenuItem},
     tray::TrayIconBuilder,
+    image::Image,
     async_runtime,
     Emitter, Manager,
 };
+use image::GenericImageView;
 use trade_entries::{new_store as new_trade_store, SharedTradeEntries, TradeEntry};
 use url::Url;
 use watcher::DirectoryWatcher;
@@ -551,7 +553,15 @@ fn main() {
             let id_open_settings = open_settings.id().clone();
             let id_quit = quit_item.id().clone();
 
+            let tray_image = {
+                let img = image::open("icons/tray.png").expect("Failed to load tray icon");
+                let rgba = img.to_rgba8();
+                let (width, height) = img.dimensions();
+                Image::new_owned(rgba.into_raw(), width, height)
+            };
+
             TrayIconBuilder::new()
+                .icon(tray_image)
                 .menu(&tray_menu)
                 .on_menu_event(move |app, event| {
                     println!("Tray menu clicked: {:?}", event.id());

@@ -390,9 +390,9 @@ function populateMapSelector() {
         return map.tileLayers.filter(tl => tl.year === year).map(tl => tl.mapType);
     }
     // Helper to get mapId for selection
-    function getMapId(island: string) {
-        return maps.find(m => m.name === island)?.id;
-    }
+    // function getMapId(island: string) {
+    //     return maps.find(m => m.name === island)?.id;
+    // }
     // Helper to get tileLayer for selection
     function getTileLayer(map: any, year: number, mapType: string) {
         return map?.tileLayers.find((tl: { year: number; mapType: string; }) => tl.year === year && tl.mapType === mapType);
