@@ -74,25 +74,25 @@ export const MAPS: Record<string, MapConfig> = {
         ]
     },
     // Template for adding more maps:
-    // independence: {
-    //     id: 'independence',
-    //     name: 'Independence',
-    //     extent: [0, 0, 8192, 8192], // Adjust based on actual map size
-    //     resolutions: [32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125],
-    //     tileLayers: [
-    //         {
-    //             id: 'terrain',
-    //             name: 'Terrain',
-    //             urlTemplate: 'https://.../{z}/{x}/{y}.png',
-    //             zoomLevels: 7,
-    //             enabled: true,
-    //             opacity: 1.0
-    //         }
-    //     ],
-    //     startingLocations: [
-    //         // Add starting locations for Independence
-    //     ]
-    // },
+    independence: {
+        id: 'independence',
+        name: 'Independence',
+        extent: [0, 0, 4096, 4096],
+        resolutions: [16, 8, 4, 2, 1, 0.5, 0.25],
+        tileLayers: [
+            {
+                id: 'terrain',
+                name: 'Terrain',
+                urlTemplate: 'https://pub-6192353739be4c3191140ad893e309f2.r2.dev/independence/2025/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 7,
+                enabled: true,
+                opacity: 1.0
+            }
+        ],
+        startingLocations: [
+            // Add starting locations for Independence
+        ]
+    },
     // celebration: {
     //     id: 'celebration',
     //     name: 'Celebration',
