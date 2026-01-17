@@ -12,7 +12,7 @@ import VectorSource from 'ol/source/Vector';
 import Feature from 'ol/Feature';
 import { Point, Geometry } from 'ol/geom';
 import { Style, Stroke, Fill, Text, Circle as CircleStyle } from 'ol/style';
-import { addUserLayer, toggleUserLayer, getUserLayers, UserLayer, addFeatureToLayer, loadAndRenderUserLayers, setCurrentMapId } from './userLayers';
+import { addUserLayer, toggleUserLayer, getUserLayers, UserLayer, addFeatureToLayer, loadAndRenderUserLayers, setCurrentMapId, removeFeatureFromLayer } from './userLayers';
 import { Draw } from 'ol/interaction';
 import { getMapConfig, getAllMaps } from './mapConfigs';
 
@@ -22,6 +22,8 @@ let map: Map;
 let currentTileLayer: TileLayer<XYZ>;
 let drawInteraction: Draw | null = null;
 let selectedLayerForDrawing: string | null = null;
+let currentFeature: Feature | null = null;
+let currentFeatureLayer: string | null = null;
 
 // Helper functions
 function getYearsForIsland(island: string) {
@@ -275,6 +277,7 @@ const featureInfoDesc = document.getElementById('feature-info-desc') as HTMLPara
 const featureInfoType = document.getElementById('feature-info-type') as HTMLSpanElement;
 const featureInfoCoords = document.getElementById('feature-info-coords') as HTMLSpanElement;
 const featureInfoCloseBtn = document.getElementById('feature-info-close') as HTMLButtonElement;
+const featureInfoRemoveBtn = document.getElementById('feature-info-remove') as HTMLButtonElement;
 
 // --- Add Feature Modal ---
 const addFeatureModal = document.getElementById('add-feature-modal') as HTMLDivElement;
@@ -311,6 +314,21 @@ function setupUIHandlers(mapInstance: Map) {
     // Feature info close button
     featureInfoCloseBtn.addEventListener('click', () => {
         featureInfoBox.style.display = 'none';
+        currentFeature = null;
+        currentFeatureLayer = null;
+    });
+
+    // Feature info remove button
+    featureInfoRemoveBtn.addEventListener('click', () => {
+        if (currentFeature && currentFeatureLayer) {
+            const featureName = currentFeature.get('name') || 'Unnamed Feature';
+            if (confirm(`Are you sure you want to remove the feature "${featureName}"?`)) {
+                removeFeatureFromLayer(mapInstance, currentFeatureLayer, featureName);
+                featureInfoBox.style.display = 'none';
+                currentFeature = null;
+                currentFeatureLayer = null;
+            }
+        }
     });
 
     // Map click handler for feature info
@@ -322,6 +340,24 @@ function setupUIHandlers(mapInstance: Map) {
         });
 
         if (feature) {
+            // Store reference to current feature for removal (only if it's a real Feature, not RenderFeature)
+            currentFeature = feature instanceof Feature ? feature : null;
+
+            // Determine which layer this feature belongs to
+            currentFeatureLayer = null;
+            if (currentFeature) {
+                const layers = mapInstance.getLayers().getArray();
+                for (const layer of layers) {
+                    if (layer instanceof VectorLayer) {
+                        const source = layer.getSource();
+                        if (source && source.getFeatures().includes(currentFeature)) {
+                            currentFeatureLayer = layer.get('name');
+                            break;
+                        }
+                    }
+                }
+            }
+
             const properties = feature.getProperties();
             const geometry = feature.getGeometry();
             const mapConfig = getMapConfig(currentMapId);
@@ -344,6 +380,8 @@ function setupUIHandlers(mapInstance: Map) {
             featureInfoBox.style.display = 'block';
         } else {
             featureInfoBox.style.display = 'none';
+            currentFeature = null;
+            currentFeatureLayer = null;
         }
     });
 }
@@ -589,6 +627,10 @@ function switchMap(newMapId: string) {
     if (featureInfoBox) {
         featureInfoBox.style.display = 'none';
     }
+
+    // Clear current feature references
+    currentFeature = null;
+    currentFeatureLayer = null;
 
     // Initialize new map
     map = initializeMap(newMapId);
