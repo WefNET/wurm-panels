@@ -61,14 +61,14 @@ function loadMapPreferences() {
 }
 
 // Local storage helpers for map view state
-function saveMapViewState(center: number[], zoom: number) {
+function saveMapViewState(mapId: string, center: number[], zoom: number) {
     const viewState = { center, zoom };
-    localStorage.setItem('wurmMapViewState', JSON.stringify(viewState));
+    localStorage.setItem(`wurmMapViewState_${mapId}`, JSON.stringify(viewState));
 }
 
-function loadMapViewState() {
+function loadMapViewState(mapId: string) {
     try {
-        const saved = localStorage.getItem('wurmMapViewState');
+        const saved = localStorage.getItem(`wurmMapViewState_${mapId}`);
         if (saved) {
             return JSON.parse(saved);
         }
@@ -183,8 +183,8 @@ function initializeMap(mapId: string) {
     });
 
     // Load saved view state or use defaults
-    const savedViewState = loadMapViewState();
-    const defaultCenter = [4096, 4096];
+    const savedViewState = loadMapViewState(mapId);
+    const defaultCenter = [extent[2] / 2, extent[3] / 2]; // Center of the map extent
     const defaultZoom = 2;
 
     const map = new Map({
@@ -219,7 +219,7 @@ function initializeMap(mapId: string) {
             const center = map.getView().getCenter();
             const zoom = map.getView().getZoom();
             if (center && zoom !== undefined) {
-                saveMapViewState(center, zoom);
+                saveMapViewState(mapId, center, zoom);
             }
         }, 500); // Debounce saves to avoid excessive localStorage writes
     });
@@ -230,7 +230,7 @@ function initializeMap(mapId: string) {
             const center = map.getView().getCenter();
             const zoom = map.getView().getZoom();
             if (center && zoom !== undefined) {
-                saveMapViewState(center, zoom);
+                saveMapViewState(mapId, center, zoom);
             }
         }, 500);
     });
