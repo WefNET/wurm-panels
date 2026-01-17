@@ -195,8 +195,8 @@ button {
 /* Layer Manager Styles */
 #layer-manager {
     position: absolute;
-    top: 60px;
-    left: 10px;
+    top: 300px;
+    left: 100px;
     background: rgba(255, 255, 255);
     padding: 10px;
     border-radius: 5px;

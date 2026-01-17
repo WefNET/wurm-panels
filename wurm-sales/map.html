@@ -44,26 +44,183 @@
             pointer-events: none;
             z-index: 1000;
         }
+
+        /* Map Selector Panel Styles */
+        .map-selector-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+            transition: transform 0.3s ease-in-out;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .map-selector-panel.collapsed {
+            transform: translateX(-280px);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .panel-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            margin-right: 10px;
+            display: none; /* Hidden by default */
+        }
+
+        .map-selector-panel.collapsed .panel-toggle {
+            display: block; /* Only show when collapsed */
+        }
+
+        .panel-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-collapse {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            margin-left: auto;
+        }
+
+        .panel-collapse:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-title {
+            color: white;
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .panel-content {
+            padding: 15px;
+        }
+
+        .selector-group {
+            margin-bottom: 15px;
+        }
+
+        .selector-group label {
+            display: block;
+            color: white;
+            font-size: 14px;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .selector-group select {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .selector-group select:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .selector-group select:focus {
+            outline: none;
+            border-color: #4a9eff;
+            box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+        }
+
+        .selector-group select option {
+            background: #2a2a2a;
+            color: white;
+        }
+
+        /* Expand button when collapsed */
+        .map-selector-panel.collapsed .panel-toggle {
+            position: absolute;
+            right: -40px;
+            top: 90px;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-left: none;
+            border-radius: 0 4px 4px 0;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .map-selector-panel.collapsed .panel-toggle .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .map-selector-panel.collapsed .panel-header {
+            justify-content: center;
+        }
+
+        .map-selector-panel.collapsed .panel-title,
+        .map-selector-panel.collapsed .panel-collapse {
+            display: none;
+        }
     </style>
 </head>
 
 <body>
     <div id="map"></div>
 
-    <!-- Map Selector -->
-    <div id="map-selector">
-        <label for="island-select">Island:</label>
-        <select id="island-select"></select>
-        <label for="year-select">Year:</label>
-        <select id="year-select"></select>
-        <label for="type-select">Type:</label>
-        <select id="type-select"></select>
+    <!-- Map Selector Panel -->
+    <div id="map-selector-panel" class="map-selector-panel collapsed">
+        <div class="panel-header">
+            <button id="panel-toggle" class="panel-toggle" title="Toggle Map Selector">
+                <span class="toggle-icon">▶</span>
+            </button>
+            <h3 class="panel-title">Map Selector</h3>
+            <button id="panel-collapse" class="panel-collapse" title="Collapse Panel">
+                <span class="collapse-icon">◀</span>
+            </button>
+        </div>
+        <div class="panel-content">
+            <div class="selector-group">
+                <label for="island-select">Island:</label>
+                <select id="island-select"></select>
+            </div>
+            <div class="selector-group">
+                <label for="year-select">Year:</label>
+                <select id="year-select"></select>
+            </div>
+            <div class="selector-group">
+                <label for="type-select">Type:</label>
+                <select id="type-select"></select>
+            </div>
+        </div>
     </div>
 
     <div id="layer-manager">
         <h2>User Layers</h2>
         <ul id="layer-list">
-            <!-- Layers will be dynamically added here -->
         </ul>
         <div class="form-container">
             <input type="text" id="new-layer-name" placeholder="New layer name" />
@@ -75,6 +232,7 @@
             <p>Select a layer and click "Add Point", then click on the map.</p>
         </div>
     </div>
+
     <div id="feature-info" style="display: none;">
         <h3 id="feature-info-name"></h3>
         <p id="feature-info-desc"></p>

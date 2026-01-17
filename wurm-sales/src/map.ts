@@ -618,3 +618,41 @@ const initialMapId = initialMap?.id || 'xanadu';
 
 map = initializeMap(initialMapId);
 populateMapSelector();
+
+// Initialize map selector panel
+initializeMapSelectorPanel();
+
+// Panel management functions
+function initializeMapSelectorPanel() {
+    const panel = document.getElementById('map-selector-panel') as HTMLElement;
+    const toggleBtn = document.getElementById('panel-toggle') as HTMLButtonElement;
+    const collapseBtn = document.getElementById('panel-collapse') as HTMLButtonElement;
+
+    if (!panel || !toggleBtn || !collapseBtn) return;
+
+    // Load saved panel state
+    const savedState = localStorage.getItem('wurmMapPanelExpanded');
+    const isExpanded = savedState === 'true';
+
+    if (isExpanded) {
+        panel.classList.remove('collapsed');
+    } else {
+        panel.classList.add('collapsed');
+    }
+
+    // Toggle panel visibility
+    function togglePanel() {
+        const isCollapsed = panel.classList.contains('collapsed');
+        if (isCollapsed) {
+            panel.classList.remove('collapsed');
+            localStorage.setItem('wurmMapPanelExpanded', 'true');
+        } else {
+            panel.classList.add('collapsed');
+            localStorage.setItem('wurmMapPanelExpanded', 'false');
+        }
+    }
+
+    // Event listeners
+    toggleBtn.addEventListener('click', togglePanel);
+    collapseBtn.addEventListener('click', togglePanel);
+}
