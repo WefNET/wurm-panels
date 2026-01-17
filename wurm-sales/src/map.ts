@@ -19,8 +19,28 @@ import { getMapConfig, getAllMaps } from './mapConfigs';
 // Global state
 let currentMapId = 'xanadu'; // Default map
 let map: Map;
+let currentTileLayer: TileLayer<XYZ>;
 let drawInteraction: Draw | null = null;
 let selectedLayerForDrawing: string | null = null;
+
+// Helper functions
+function getYearsForIsland(island: string) {
+    const maps = getAllMaps();
+    const map = maps.find(m => m.name === island);
+    if (!map) return [];
+    return Array.from(new Set(map.tileLayers.map(tl => tl.year))).sort((a, b) => b - a);
+}
+
+function getTypesForIslandYear(island: string, year: number) {
+    const maps = getAllMaps();
+    const map = maps.find(m => m.name === island);
+    if (!map) return [];
+    return map.tileLayers.filter(tl => tl.year === year).map(tl => tl.mapType);
+}
+
+function getTileLayer(map: any, year: number, mapType: string) {
+    return map?.tileLayers.find((tl: { year: number; mapType: string; }) => tl.year === year && tl.mapType === mapType);
+}
 
 /**
  * Initialize the map with a specific configuration
@@ -53,7 +73,8 @@ function initializeMap(mapId: string) {
     });
 
     // Create tile layers from configuration
-    const terrainLayer = mapConfig.tileLayers[0]; // Get the first (terrain) layer
+    // Find the correct tile layer based on selected year and type
+    const terrainLayer = mapConfig.tileLayers.find(tl => tl.year === selectedYear && tl.mapType === selectedType) || mapConfig.tileLayers[0]; // Fallback to first layer
     const layer = new TileLayer({
         source: new XYZ({
             projection: projection,
@@ -80,6 +101,9 @@ function initializeMap(mapId: string) {
         opacity: terrainLayer.opacity || 1.0,
         visible: terrainLayer.enabled
     });
+
+    // Store reference to current tile layer for switching
+    currentTileLayer = layer;
 
     // Create starting location features from config
     const startingLocationFeatures = (mapConfig.startingLocations || []).map(location => {
@@ -377,33 +401,10 @@ function populateMapSelector() {
         islandSelect.appendChild(option);
     });
 
-    // Helper to get years for selected island
-    function getYearsForIsland(island: string) {
-        const map = maps.find(m => m.name === island);
-        if (!map) return [];
-        return Array.from(new Set(map.tileLayers.map(tl => tl.year))).sort((a, b) => b - a);
-    }
-    // Helper to get map types for selected island/year
-    function getTypesForIslandYear(island: string, year: number) {
-        const map = maps.find(m => m.name === island);
-        if (!map) return [];
-        return map.tileLayers.filter(tl => tl.year === year).map(tl => tl.mapType);
-    }
-    // Helper to get mapId for selection
-    // function getMapId(island: string) {
-    //     return maps.find(m => m.name === island)?.id;
-    // }
-    // Helper to get tileLayer for selection
-    function getTileLayer(map: any, year: number, mapType: string) {
-        return map?.tileLayers.find((tl: { year: number; mapType: string; }) => tl.year === year && tl.mapType === mapType);
-    }
+    // Helper functions moved outside
 
     // Set initial selection
-    let selectedIsland = islands[0];
-    let years = getYearsForIsland(selectedIsland);
-    let selectedYear = years[0];
-    let types = getTypesForIslandYear(selectedIsland, selectedYear);
-    let selectedType = types[0];
+    // (moved outside function)
 
     function updateYearSelect() {
         years = getYearsForIsland(selectedIsland);
@@ -475,7 +476,27 @@ function populateMapSelector() {
                 switchMap(map.id);
             } else {
                 // If the map is already loaded, just switch tile layer
-                // (implement tile layer switching logic here if needed)
+                if (currentTileLayer && tileLayer) {
+                    const source = currentTileLayer.getSource() as XYZ;
+                    if (source) {
+                        // Update the tile URL function to use the new tile layer
+                        source.setTileUrlFunction((tileCoord) => {
+                            if (!tileCoord) return undefined;
+
+                            const z = tileCoord[0];
+                            const x = tileCoord[1];
+                            const y = tileCoord[2];
+
+                            const url = tileLayer.urlTemplate
+                                .replace('{z}', z.toString())
+                                .replace('{x}', x.toString())
+                                .replace('{y}', y.toString());
+                            return url;
+                        });
+                        // Clear the tile cache to force reload of tiles
+                        source.refresh();
+                    }
+                }
             }
         }
     }
@@ -512,5 +533,14 @@ function switchMap(newMapId: string) {
 }
 
 // Initialize on page load
+// Set initial selection before initializing map
+const maps = getAllMaps();
+const islands = [...new Set(maps.map(m => m.name))];
+let selectedIsland = islands[0];
+let years = getYearsForIsland(selectedIsland);
+let selectedYear = years[0] || 2025; // Default fallback
+let types = getTypesForIslandYear(selectedIsland, selectedYear);
+let selectedType = types[0] || 'terrain'; // Default fallback
+
 map = initializeMap('xanadu');
 populateMapSelector();

@@ -267,7 +267,7 @@ async fn open_map_window(app: tauri::AppHandle) -> Result<(), String> {
     let url = tauri::WebviewUrl::App("map.html".into());
 
     match tauri::webview::WebviewWindowBuilder::new(&app, "map", url)
-        .title("Xanadu Map")
+        .title("Wurm Panels Map")
         .inner_size(1200.0, 900.0)
         .min_inner_size(800.0, 600.0)
         .resizable(true)
