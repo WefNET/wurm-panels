@@ -60,6 +60,24 @@ function loadMapPreferences() {
     return null;
 }
 
+// Local storage helpers for map view state
+function saveMapViewState(center: number[], zoom: number) {
+    const viewState = { center, zoom };
+    localStorage.setItem('wurmMapViewState', JSON.stringify(viewState));
+}
+
+function loadMapViewState() {
+    try {
+        const saved = localStorage.getItem('wurmMapViewState');
+        if (saved) {
+            return JSON.parse(saved);
+        }
+    } catch (e) {
+        console.warn('Failed to load map view state:', e);
+    }
+    return null;
+}
+
 /**
  * Initialize the map with a specific configuration
  */
@@ -164,6 +182,11 @@ function initializeMap(mapId: string) {
         }
     });
 
+    // Load saved view state or use defaults
+    const savedViewState = loadMapViewState();
+    const defaultCenter = [4096, 4096];
+    const defaultZoom = 2;
+
     const map = new Map({
         target: 'map',  // id of your HTML element
         layers: [layer, vectorLayer],
@@ -180,21 +203,47 @@ function initializeMap(mapId: string) {
         ]),
         view: new View({
             projection: projection,
-            center: [4096, 4096],  // center of your image
+            center: savedViewState?.center || defaultCenter,
             resolutions: resolutions, // Use explicit resolutions for z0-z8
-            zoom: 2,
+            zoom: savedViewState?.zoom || defaultZoom,
             constrainResolution: true, // Snap to integer zoom levels
             // extent: extent // Removed to allow zooming out to see margin
         })
     });
 
+    // Add view change listeners to save state
+    let viewChangeTimeout: ReturnType<typeof setTimeout>;
+    map.getView().on('change:center', () => {
+        clearTimeout(viewChangeTimeout);
+        viewChangeTimeout = setTimeout(() => {
+            const center = map.getView().getCenter();
+            const zoom = map.getView().getZoom();
+            if (center && zoom !== undefined) {
+                saveMapViewState(center, zoom);
+            }
+        }, 500); // Debounce saves to avoid excessive localStorage writes
+    });
 
-    // Fit map to window initially
-    map.getView().fit(extent, { padding: [50, 50, 50, 50] });
-    // Zoom in one level from the "fit" view
-    const currentZoom = map.getView().getZoom();
-    if (currentZoom !== undefined) {
-        map.getView().setZoom(currentZoom + 1);
+    map.getView().on('change:resolution', () => {
+        clearTimeout(viewChangeTimeout);
+        viewChangeTimeout = setTimeout(() => {
+            const center = map.getView().getCenter();
+            const zoom = map.getView().getZoom();
+            if (center && zoom !== undefined) {
+                saveMapViewState(center, zoom);
+            }
+        }, 500);
+    });
+
+    // Only fit to extent if no saved view state (first time user)
+    if (!savedViewState) {
+        // Fit map to window initially
+        map.getView().fit(extent, { padding: [50, 50, 50, 50] });
+        // Zoom in one level from the "fit" view
+        const currentZoom = map.getView().getZoom();
+        if (currentZoom !== undefined) {
+            map.getView().setZoom(currentZoom + 1);
+        }
     }
 
     console.log(`${mapConfig.name} map initialized`, map);
