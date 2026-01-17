@@ -34,74 +34,6 @@ export interface MapConfig {
  * All available maps in the application.
  */
 export const MAPS: Record<string, MapConfig> = {
-    xanadu: {
-        id: 'xanadu',
-        name: 'Xanadu',
-        extent: [0, 0, 8192, 8192],
-        resolutions: [32, 16, 8, 4, 2, 1, 0.5, 0.25], // 8 zoom levels with virtual zooming
-        tileLayers: [
-            {
-                id: 'terrain',
-                name: 'Terrain',
-                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2025/terrain/{z}/{x}/{y}.png',
-                zoomLevels: 6, // Max zoom level 5 for real tiles, higher levels scale z=5
-                enabled: true,
-                opacity: 1.0,
-                mapType: "terrain",
-                year: 2025
-            },
-            // Add more tile layers here as they become available
-            // {
-            //     id: 'roads',
-            //     name: 'Roads Overlay',
-            //     urlTemplate: 'https://.../{z}/{x}/{y}.png',
-            //     zoomLevels: 7,
-            //     enabled: false,
-            //     opacity: 0.8
-            // },
-            // {
-            //     id: 'deeds',
-            //     name: 'Deeds',
-            //     urlTemplate: 'https://.../{z}/{x}/{y}.png',
-            //     zoomLevels: 7,
-            //     enabled: false,
-            //     opacity: 0.7
-            // }
-        ],
-        startingLocations: [
-            { name: 'Summerholt', coords: [6602, 2252] },
-            { name: 'Greymead', coords: [4701, 3051] },
-            { name: 'Whitefay', coords: [5651, 3051] },
-            { name: 'Glasshollow', coords: [1580, 787] },
-            { name: 'Newspring', coords: [883, 7229] },
-            { name: 'Esteron', coords: [7410, 6434] },
-            { name: 'Linton', coords: [1825, 4166] },
-            { name: 'Lormere', coords: [3481, 6437] },
-            { name: 'Vrock Landing', coords: [2722, 2241] }
-        ]
-    },
-    // Template for adding more maps:
-    independence: {
-        id: 'independence',
-        name: 'Independence',
-        extent: [0, 0, 4096, 4096],
-        resolutions: [16, 8, 4, 2, 1, 0.5, 0.25], // 7 zoom levels with virtual zooming
-        tileLayers: [
-            {
-                id: 'terrain',
-                name: 'Terrain',
-                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/independence/2025/terrain/{z}/{x}/{y}.png',
-                zoomLevels: 5, // Max zoom level 4 for real tiles, higher levels scale z=4
-                enabled: true,
-                opacity: 1.0,
-                mapType: "terrain",
-                year: 2025
-            }
-        ],
-        startingLocations: [
-            // Add starting locations for Independence
-        ]
-    },
     celebration: {
         id: 'celebration',
         name: 'Celebration',
@@ -159,6 +91,73 @@ export const MAPS: Record<string, MapConfig> = {
             }
         ],
         startingLocations: []
+    },
+    independence: {
+        id: 'independence',
+        name: 'Independence',
+        extent: [0, 0, 4096, 4096],
+        resolutions: [16, 8, 4, 2, 1, 0.5, 0.25], // 7 zoom levels with virtual zooming
+        tileLayers: [
+            {
+                id: 'terrain',
+                name: 'Terrain',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/independence/2025/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 5, // Max zoom level 4 for real tiles, higher levels scale z=4
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2025
+            }
+        ],
+        startingLocations: [
+            // Add starting locations for Independence
+        ]
+    },
+    xanadu: {
+        id: 'xanadu',
+        name: 'Xanadu',
+        extent: [0, 0, 8192, 8192],
+        resolutions: [32, 16, 8, 4, 2, 1, 0.5, 0.25], // 8 zoom levels with virtual zooming
+        tileLayers: [
+            {
+                id: 'terrain',
+                name: 'Terrain',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2025/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 6, // Max zoom level 5 for real tiles, higher levels scale z=5
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2025
+            },
+            // Add more tile layers here as they become available
+            // {
+            //     id: 'roads',
+            //     name: 'Roads Overlay',
+            //     urlTemplate: 'https://.../{z}/{x}/{y}.png',
+            //     zoomLevels: 7,
+            //     enabled: false,
+            //     opacity: 0.8
+            // },
+            // {
+            //     id: 'deeds',
+            //     name: 'Deeds',
+            //     urlTemplate: 'https://.../{z}/{x}/{y}.png',
+            //     zoomLevels: 7,
+            //     enabled: false,
+            //     opacity: 0.7
+            // }
+        ],
+        startingLocations: [
+            { name: 'Summerholt', coords: [6602, 2252] },
+            { name: 'Greymead', coords: [4701, 3051] },
+            { name: 'Whitefay', coords: [5651, 3051] },
+            { name: 'Glasshollow', coords: [1580, 787] },
+            { name: 'Newspring', coords: [883, 7229] },
+            { name: 'Esteron', coords: [7410, 6434] },
+            { name: 'Linton', coords: [1825, 4166] },
+            { name: 'Lormere', coords: [3481, 6437] },
+            { name: 'Vrock Landing', coords: [2722, 2241] }
+        ]
     }
 };
 
