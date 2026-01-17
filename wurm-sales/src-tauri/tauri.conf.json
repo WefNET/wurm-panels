@@ -25,6 +25,9 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Jackjones",
+    "homepage": "https://wurm.rodeo",
+    "license": "MIT",
     "resources": [
       "icons/tray.png",
       "icons/wurm-panels.ico",
