@@ -42,6 +42,24 @@ function getTileLayer(map: any, year: number, mapType: string) {
     return map?.tileLayers.find((tl: { year: number; mapType: string; }) => tl.year === year && tl.mapType === mapType);
 }
 
+// Local storage helpers for map preferences
+function saveMapPreferences(island: string, year: number, type: string) {
+    const preferences = { island, year, type };
+    localStorage.setItem('wurmMapPreferences', JSON.stringify(preferences));
+}
+
+function loadMapPreferences() {
+    try {
+        const saved = localStorage.getItem('wurmMapPreferences');
+        if (saved) {
+            return JSON.parse(saved);
+        }
+    } catch (e) {
+        console.warn('Failed to load map preferences:', e);
+    }
+    return null;
+}
+
 /**
  * Initialize the map with a specific configuration
  */
@@ -407,46 +425,38 @@ function populateMapSelector() {
     // (moved outside function)
 
     function updateYearSelect() {
-        years = getYearsForIsland(selectedIsland);
+        const availableYears = getYearsForIsland(selectedIsland);
         yearSelect.innerHTML = '';
-        years.forEach(year => {
+        availableYears.forEach((year: number) => {
             const option = document.createElement('option');
             option.value = year.toString();
             option.textContent = year.toString();
             yearSelect.appendChild(option);
         });
-        selectedYear = years[0];
+        // Don't override selectedYear here, just populate the dropdown
     }
     function updateTypeSelect() {
-        types = getTypesForIslandYear(selectedIsland, selectedYear);
+        const availableTypes = getTypesForIslandYear(selectedIsland, selectedYear);
         typeSelect.innerHTML = '';
-        types.forEach(type => {
+        availableTypes.forEach((type: string) => {
             const option = document.createElement('option');
             option.value = type;
             option.textContent = type.charAt(0).toUpperCase() + type.slice(1);
             typeSelect.appendChild(option);
         });
-        selectedType = types[0];
+        // Don't override selectedType here, just populate the dropdown
     }
 
     // Initial population
     updateYearSelect();
     updateTypeSelect();
 
-    // Set current selection if possible
-    const currentMap = maps.find(m => m.id === currentMapId);
-    if (currentMap) {
-        selectedIsland = currentMap.name;
-        years = getYearsForIsland(selectedIsland);
-        selectedYear = years[0];
-        types = getTypesForIslandYear(selectedIsland, selectedYear);
-        selectedType = types[0];
-        islandSelect.value = selectedIsland;
-        updateYearSelect();
-        yearSelect.value = selectedYear.toString();
-        updateTypeSelect();
-        typeSelect.value = selectedType;
-    }
+    // Set current selection from saved preferences or current map
+    islandSelect.value = selectedIsland;
+    updateYearSelect();
+    yearSelect.value = selectedYear.toString();
+    updateTypeSelect();
+    typeSelect.value = selectedType;
 
     islandSelect.addEventListener('change', () => {
         selectedIsland = islandSelect.value;
@@ -454,16 +464,19 @@ function populateMapSelector() {
         selectedYear = parseInt(yearSelect.value, 10);
         updateTypeSelect();
         selectedType = typeSelect.value as "terrain" | "topological";
+        saveMapPreferences(selectedIsland, selectedYear, selectedType);
         switchToSelectedMap();
     });
     yearSelect.addEventListener('change', () => {
         selectedYear = parseInt(yearSelect.value, 10);
         updateTypeSelect();
         selectedType = typeSelect.value as "terrain" | "topological";
+        saveMapPreferences(selectedIsland, selectedYear, selectedType);
         switchToSelectedMap();
     });
     typeSelect.addEventListener('change', () => {
         selectedType = typeSelect.value as "terrain" | "topological";
+        saveMapPreferences(selectedIsland, selectedYear, selectedType);
         switchToSelectedMap();
     });
 
@@ -536,11 +549,23 @@ function switchMap(newMapId: string) {
 // Set initial selection before initializing map
 const maps = getAllMaps();
 const islands = [...new Set(maps.map(m => m.name))];
-let selectedIsland = islands[0];
-let years = getYearsForIsland(selectedIsland);
-let selectedYear = years[0] || 2025; // Default fallback
-let types = getTypesForIslandYear(selectedIsland, selectedYear);
-let selectedType = types[0] || 'terrain'; // Default fallback
 
-map = initializeMap('xanadu');
+// Load saved preferences or use defaults
+const savedPrefs = loadMapPreferences();
+let selectedIsland = savedPrefs?.island || islands[0];
+let selectedYear = savedPrefs?.year || (getYearsForIsland(selectedIsland)[0] || 2025);
+let selectedType = savedPrefs?.type || (getTypesForIslandYear(selectedIsland, selectedYear)[0] || 'terrain');
+
+// Ensure the saved island still exists, fallback to first available
+if (!islands.includes(selectedIsland)) {
+    selectedIsland = islands[0];
+    selectedYear = getYearsForIsland(selectedIsland)[0] || 2025;
+    selectedType = getTypesForIslandYear(selectedIsland, selectedYear)[0] || 'terrain';
+}
+
+// Get the map ID for the selected island
+const initialMap = maps.find(m => m.name === selectedIsland);
+const initialMapId = initialMap?.id || 'xanadu';
+
+map = initializeMap(initialMapId);
 populateMapSelector();
