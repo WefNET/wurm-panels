@@ -52,7 +52,7 @@
             left: 0;
             width: 280px;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.6);
             backdrop-filter: blur(10px);
             border-right: 1px solid rgba(255, 255, 255, 0.2);
             z-index: 1000;
@@ -81,7 +81,6 @@
             padding: 8px;
             border-radius: 4px;
             transition: background-color 0.2s;
-            margin-right: 10px;
             display: none; /* Hidden by default */
         }
 
@@ -174,7 +173,7 @@
         }
 
         .map-selector-panel.collapsed .panel-toggle .toggle-icon {
-            transform: rotate(180deg);
+            /* Removed rotation for emoji icon */
         }
 
         .map-selector-panel.collapsed .panel-header {
@@ -195,7 +194,7 @@
     <div id="map-selector-panel" class="map-selector-panel collapsed">
         <div class="panel-header">
             <button id="panel-toggle" class="panel-toggle" title="Toggle Map Selector">
-                <span class="toggle-icon">▶</span>
+                <span class="toggle-icon">🗺️</span>
             </button>
             <h3 class="panel-title">Map Selector</h3>
             <button id="panel-collapse" class="panel-collapse" title="Collapse Panel">
