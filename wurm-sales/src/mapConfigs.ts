@@ -43,7 +43,7 @@ export const MAPS: Record<string, MapConfig> = {
             {
                 id: 'terrain',
                 name: 'Terrain',
-                urlTemplate: 'https://red-river-af03.john-wefler.workers.dev/tiles/xanadu/2025/terrain/{z}/{x}/{y}.png',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2025/terrain/{z}/{x}/{y}.png',
                 zoomLevels: 6, // Max zoom level 5 for real tiles, higher levels scale z=5
                 enabled: true,
                 opacity: 1.0,
@@ -90,7 +90,7 @@ export const MAPS: Record<string, MapConfig> = {
             {
                 id: 'terrain',
                 name: 'Terrain',
-                urlTemplate: 'https://red-river-af03.john-wefler.workers.dev/tiles/independence/2025/terrain/{z}/{x}/{y}.png',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/independence/2025/terrain/{z}/{x}/{y}.png',
                 zoomLevels: 5, // Max zoom level 4 for real tiles, higher levels scale z=4
                 enabled: true,
                 opacity: 1.0,
@@ -111,7 +111,7 @@ export const MAPS: Record<string, MapConfig> = {
             {
                 id: 'terrain',
                 name: 'Terrain',
-                urlTemplate: 'https://red-river-af03.john-wefler.workers.dev/tiles/celebration/2025/terrain/{z}/{x}/{y}.png',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2025/terrain/{z}/{x}/{y}.png',
                 zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
                 enabled: true,
                 opacity: 1.0,
