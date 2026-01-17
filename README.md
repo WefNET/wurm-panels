@@ -11,3 +11,7 @@ Installing and running this app gives you a System Tray app that gives you panel
 - Granger
 - Log file monitoring
 - Maps with user saved layers and points
+
+- Settings
+
+To get the logging working, please select your player "logs" directory.
