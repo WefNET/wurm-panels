@@ -435,8 +435,8 @@ function startDrawing(type: 'Point' | 'LineString' | 'Polygon', mapInstance: Map
     const source = olLayer.getSource();
     if (!source) return;
 
+    // Create draw interaction without a source to prevent automatic feature addition
     drawInteraction = new Draw({
-        source: source,
         type: type,
     });
 
@@ -444,6 +444,14 @@ function startDrawing(type: 'Point' | 'LineString' | 'Polygon', mapInstance: Map
         const feature = event.feature;
         const geometry = feature.getGeometry();
         if (geometry) {
+            // Set temporary properties for the feature so it doesn't show as "unknown"
+            feature.set('name', 'New Feature (unsaved)');
+            feature.set('description', '');
+            feature.set('icon', 'default');
+
+            // Add the feature temporarily to the source for visual feedback
+            source.addFeature(feature);
+
             addFeatureModal.style.display = 'block';
 
             const saveHandler = () => {
@@ -452,6 +460,10 @@ function startDrawing(type: 'Point' | 'LineString' | 'Polygon', mapInstance: Map
                 const featureDesc = featureDescTextarea.value;
                 const iconType = featureIconSelect.value;
 
+                // Remove the temporary feature
+                source.removeFeature(feature);
+
+                // Add the properly configured feature
                 addFeatureToLayer(mapInstance, targetLayerName, {
                     type: 'Point',
                     coordinates: coords,
@@ -470,12 +482,10 @@ function startDrawing(type: 'Point' | 'LineString' | 'Polygon', mapInstance: Map
             };
 
             const cancelHandler = () => {
+                // Remove the temporary feature
+                source.removeFeature(feature);
                 addFeatureModal.style.display = 'none';
                 cancelFeatureBtn.removeEventListener('click', cancelHandler);
-                const source = olLayer.getSource();
-                if (source) {
-                    source.removeFeature(feature);
-                }
             };
 
             saveFeatureBtn.addEventListener('click', saveHandler, { once: true });
@@ -612,6 +622,7 @@ function switchMap(newMapId: string) {
 
     // Remove draw interaction if active
     if (drawInteraction) {
+        map.removeInteraction(drawInteraction);
         drawInteraction = null;
     }
 
