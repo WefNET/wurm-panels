@@ -28,6 +28,7 @@ export interface MapConfig {
         name: string;
         coords: [number, number]; // Game coordinates
     }>;
+    communityMapUrl?: string;
 }
 
 /**
@@ -157,7 +158,8 @@ export const MAPS: Record<string, MapConfig> = {
             { name: 'Linton', coords: [1825, 4166] },
             { name: 'Lormere', coords: [3481, 6437] },
             { name: 'Vrock Landing', coords: [2722, 2241] }
-        ]
+        ],
+        communityMapUrl: "https://xanadu.yaga.host"
     }
 };
 

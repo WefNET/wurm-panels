@@ -13,6 +13,7 @@ import Feature from 'ol/Feature';
 import { Point, Geometry } from 'ol/geom';
 import { Style, Stroke, Fill, Text, Circle as CircleStyle } from 'ol/style';
 import { addUserLayer, toggleUserLayer, getUserLayers, UserLayer, addFeatureToLayer, loadAndRenderUserLayers, setCurrentMapId, removeFeatureFromLayer } from './userLayers';
+import { fetchCommunityDeeds, loadCommunityDeeds, saveCommunityDeeds } from './communityDeeds';
 import { Draw } from 'ol/interaction';
 import { getMapConfig, getAllMaps } from './mapConfigs';
 
@@ -24,6 +25,9 @@ let drawInteraction: Draw | null = null;
 let selectedLayerForDrawing: string | null = null;
 let currentFeature: Feature | null = null;
 let currentFeatureLayer: string | null = null;
+let communityDeedsLayer: VectorLayer<VectorSource> | null = null;
+let communityDeedsVisible = true; // Default visible
+communityDeedsVisible = localStorage.getItem('communityDeedsVisible') !== 'false';
 
 // Helper functions
 function getYearsForIsland(island: string) {
@@ -78,6 +82,94 @@ function loadMapViewState(mapId: string) {
         console.warn('Failed to load map view state:', e);
     }
     return null;
+}
+
+async function loadCommunityDeedsForMap(mapId: string) {
+    const mapConfig = getMapConfig(mapId);
+    if (!mapConfig || !mapConfig.communityMapUrl) {
+        console.log('No communityMapUrl for map:', mapId);
+        return;
+    }
+    console.log('Loading community deeds for:', mapId);
+    try {
+        let deeds = await loadCommunityDeeds(mapId);
+        console.log('Loaded deeds from file:', deeds?.length ?? 0);
+        if (!deeds) {
+            // Fetch from URL
+            console.log('Fetching deeds from URL');
+            deeds = await fetchCommunityDeeds(mapConfig.communityMapUrl);
+            console.log('Fetched deeds:', deeds.length);
+            await saveCommunityDeeds(mapId, deeds);
+        }
+        // Create features
+        const features = deeds.map(deed => {
+            const x = deed.coords[0];
+            const y = mapConfig.extent[3] - deed.coords[1]; // Flip Y
+
+            const feature = new Feature({
+                geometry: new Point([x, y]),
+                name: deed.name,
+                type: deed.deedType,
+                extra: deed.extra
+            });
+
+            // Style based on type
+            let color = 'blue'; // Default
+            if (deed.deedType === 'MissionStructure') {
+                color = 'red';
+            } else if (deed.deedType === 'GuardTowerFreedom') {
+                color = 'green';
+            }
+
+            feature.setStyle(new Style({
+                image: new CircleStyle({
+                    radius: 6,
+                    fill: new Fill({ color: `rgba(${color === 'blue' ? '0,0,255' : color === 'red' ? '255,0,0' : '0,255,0'}, 0.6)` }),
+                    stroke: new Stroke({ color: color, width: 2 })
+                }),
+                text: new Text({
+                    text: deed.name,
+                    font: '12px Calibri,sans-serif',
+                    fill: new Fill({ color: '#fff' }),
+                    stroke: new Stroke({
+                        color: '#000',
+                        width: 2
+                    }),
+                    offsetY: -15
+                })
+            }));
+
+            return feature;
+        });
+
+        console.log('Created features:', features.length);
+
+        // Create or update layer
+        if (communityDeedsLayer) {
+            communityDeedsLayer.getSource()?.clear();
+            communityDeedsLayer.getSource()?.addFeatures(features);
+        } else {
+            communityDeedsLayer = new VectorLayer({
+                source: new VectorSource({
+                    features: features
+                }),
+                visible: communityDeedsVisible
+            });
+            map.addLayer(communityDeedsLayer);
+        }
+        console.log('Added community deeds layer');
+    } catch (e) {
+        console.error('Failed to load community deeds:', e);
+    }
+}
+
+function toggleCommunityDeeds() {
+    communityDeedsVisible = !communityDeedsVisible;
+    if (communityDeedsLayer) {
+        communityDeedsLayer.setVisible(communityDeedsVisible);
+    }
+    // Save to localStorage
+    localStorage.setItem('communityDeedsVisible', communityDeedsVisible.toString());
 }
 
 /**
@@ -645,6 +737,9 @@ function switchMap(newMapId: string) {
 
     // Initialize new map
     map = initializeMap(newMapId);
+
+    // Load community deeds
+    loadCommunityDeedsForMap(newMapId);
 }
 
 // Initialize on page load
@@ -675,8 +770,20 @@ populateMapSelector();
 // Initialize map selector panel
 initializeMapSelectorPanel();
 
+// Load community deeds
+loadCommunityDeedsForMap(initialMapId);
+
 // Initialize layer manager panel
 initializeLayerManagerPanel();
+
+// Community deeds toggle setup
+const communityDeedsToggle = document.getElementById('community-deeds-toggle') as HTMLInputElement;
+if (communityDeedsToggle) {
+    communityDeedsToggle.checked = communityDeedsVisible;
+    communityDeedsToggle.addEventListener('change', () => {
+        toggleCommunityDeeds();
+    });
+}
 
 // Panel management functions
 function initializeMapSelectorPanel() {

@@ -3,6 +3,7 @@
 
 mod app_settings;
 mod auth_client;
+mod community_deeds_persistence;
 mod granger;
 mod skill_sessions;
 mod trade_entries;
@@ -461,7 +462,10 @@ fn main() {
             update_settings,
             set_always_on_top,
             user_layers_persistence::load_user_layers,
-            user_layers_persistence::save_user_layers
+            user_layers_persistence::save_user_layers,
+            community_deeds_persistence::load_community_deeds,
+            community_deeds_persistence::save_community_deeds,
+            community_deeds_persistence::fetch_community_deeds
         ])
         .on_window_event(move |window, event| {
             use tauri::WindowEvent;
