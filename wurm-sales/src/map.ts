@@ -13,7 +13,7 @@ import Feature from 'ol/Feature';
 import { Point, Geometry } from 'ol/geom';
 import { Style, Stroke, Fill, Text, Circle as CircleStyle } from 'ol/style';
 import { addUserLayer, toggleUserLayer, getUserLayers, UserLayer, addFeatureToLayer, loadAndRenderUserLayers, setCurrentMapId, removeFeatureFromLayer } from './userLayers';
-import { fetchCommunityDeeds, loadCommunityDeeds, saveCommunityDeeds } from './communityDeeds';
+import { fetchCommunityDeeds, loadCommunityDeeds, saveCommunityDeeds, fetchCommunityGuardTowers, loadCommunityGuardTowers, saveCommunityGuardTowers, fetchCommunityMissionStructures, loadCommunityMissionStructures, saveCommunityMissionStructures } from './communityDeeds';
 import { Draw } from 'ol/interaction';
 import { getMapConfig, getAllMaps } from './mapConfigs';
 
@@ -28,6 +28,14 @@ let currentFeatureLayer: string | null = null;
 let communityDeedsLayer: VectorLayer<VectorSource> | null = null;
 let communityDeedsVisible = true; // Default visible
 communityDeedsVisible = localStorage.getItem('communityDeedsVisible') !== 'false';
+
+let communityGuardTowersLayer: VectorLayer<VectorSource> | null = null;
+let communityGuardTowersVisible = true; // Default visible
+communityGuardTowersVisible = localStorage.getItem('communityGuardTowersVisible') !== 'false';
+
+let communityMissionStructuresLayer: VectorLayer<VectorSource> | null = null;
+let communityMissionStructuresVisible = true; // Default visible
+communityMissionStructuresVisible = localStorage.getItem('communityMissionStructuresVisible') !== 'false';
 
 // Helper functions
 function getYearsForIsland(island: string) {
@@ -170,6 +178,164 @@ function toggleCommunityDeeds() {
     }
     // Save to localStorage
     localStorage.setItem('communityDeedsVisible', communityDeedsVisible.toString());
+}
+
+async function loadCommunityGuardTowersForMap(mapId: string) {
+    const mapConfig = getMapConfig(mapId);
+    if (!mapConfig || !mapConfig.communityMapUrl) {
+        console.log('No communityMapUrl for map:', mapId);
+        return;
+    }
+    console.log('Loading community guard towers for:', mapId);
+    try {
+        let structures = await loadCommunityGuardTowers(mapId);
+        console.log('Loaded guard towers from file:', structures?.length ?? 0);
+        if (!structures) {
+            // Fetch from URL
+            console.log('Fetching guard towers from URL');
+            structures = await fetchCommunityGuardTowers(mapConfig.communityMapUrl);
+            console.log('Fetched guard towers:', structures.length);
+            await saveCommunityGuardTowers(mapId, structures);
+        }
+        // Create features
+        const features = structures.map(structure => {
+            const x = structure.coords[0];
+            const y = mapConfig.extent[3] - structure.coords[1]; // Flip Y
+
+            const feature = new Feature({
+                geometry: new Point([x, y]),
+                name: structure.name,
+                type: structure.structureType
+            });
+
+            feature.setStyle(new Style({
+                image: new CircleStyle({
+                    radius: 8,
+                    fill: new Fill({ color: 'rgba(255, 140, 0, 0.6)' }), // Orange
+                    stroke: new Stroke({ color: '#FF8C00', width: 2 })
+                }),
+                text: new Text({
+                    text: structure.name,
+                    font: '12px Calibri,sans-serif',
+                    fill: new Fill({ color: '#fff' }),
+                    stroke: new Stroke({
+                        color: '#000',
+                        width: 2
+                    }),
+                    offsetY: -18
+                })
+            }));
+
+            return feature;
+        });
+
+        console.log('Created guard tower features:', features.length);
+
+        // Create or update layer
+        if (communityGuardTowersLayer) {
+            communityGuardTowersLayer.getSource()?.clear();
+            communityGuardTowersLayer.getSource()?.addFeatures(features);
+        } else {
+            communityGuardTowersLayer = new VectorLayer({
+                source: new VectorSource({
+                    features: features
+                }),
+                visible: communityGuardTowersVisible
+            });
+            map.addLayer(communityGuardTowersLayer);
+        }
+        console.log('Added community guard towers layer');
+    } catch (e) {
+        console.error('Failed to load community guard towers:', e);
+    }
+}
+
+function toggleCommunityGuardTowers() {
+    communityGuardTowersVisible = !communityGuardTowersVisible;
+    if (communityGuardTowersLayer) {
+        communityGuardTowersLayer.setVisible(communityGuardTowersVisible);
+    }
+    // Save to localStorage
+    localStorage.setItem('communityGuardTowersVisible', communityGuardTowersVisible.toString());
+}
+
+async function loadCommunityMissionStructuresForMap(mapId: string) {
+    const mapConfig = getMapConfig(mapId);
+    if (!mapConfig || !mapConfig.communityMapUrl) {
+        console.log('No communityMapUrl for map:', mapId);
+        return;
+    }
+    console.log('Loading community mission structures for:', mapId);
+    try {
+        let structures = await loadCommunityMissionStructures(mapId);
+        console.log('Loaded mission structures from file:', structures?.length ?? 0);
+        if (!structures) {
+            // Fetch from URL
+            console.log('Fetching mission structures from URL');
+            structures = await fetchCommunityMissionStructures(mapConfig.communityMapUrl);
+            console.log('Fetched mission structures:', structures.length);
+            await saveCommunityMissionStructures(mapId, structures);
+        }
+        // Create features
+        const features = structures.map(structure => {
+            const x = structure.coords[0];
+            const y = mapConfig.extent[3] - structure.coords[1]; // Flip Y
+
+            const feature = new Feature({
+                geometry: new Point([x, y]),
+                name: structure.name,
+                type: structure.structureType
+            });
+
+            feature.setStyle(new Style({
+                image: new CircleStyle({
+                    radius: 7,
+                    fill: new Fill({ color: 'rgba(255, 0, 255, 0.6)' }), // Magenta
+                    stroke: new Stroke({ color: '#FF00FF', width: 2 })
+                }),
+                text: new Text({
+                    text: structure.name,
+                    font: '12px Calibri,sans-serif',
+                    fill: new Fill({ color: '#fff' }),
+                    stroke: new Stroke({
+                        color: '#000',
+                        width: 2
+                    }),
+                    offsetY: -16
+                })
+            }));
+
+            return feature;
+        });
+
+        console.log('Created mission structure features:', features.length);
+
+        // Create or update layer
+        if (communityMissionStructuresLayer) {
+            communityMissionStructuresLayer.getSource()?.clear();
+            communityMissionStructuresLayer.getSource()?.addFeatures(features);
+        } else {
+            communityMissionStructuresLayer = new VectorLayer({
+                source: new VectorSource({
+                    features: features
+                }),
+                visible: communityMissionStructuresVisible
+            });
+            map.addLayer(communityMissionStructuresLayer);
+        }
+        console.log('Added community mission structures layer');
+    } catch (e) {
+        console.error('Failed to load community mission structures:', e);
+    }
+}
+
+function toggleCommunityMissionStructures() {
+    communityMissionStructuresVisible = !communityMissionStructuresVisible;
+    if (communityMissionStructuresLayer) {
+        communityMissionStructuresLayer.setVisible(communityMissionStructuresVisible);
+    }
+    // Save to localStorage
+    localStorage.setItem('communityMissionStructuresVisible', communityMissionStructuresVisible.toString());
 }
 
 /**
@@ -740,6 +906,12 @@ function switchMap(newMapId: string) {
 
     // Load community deeds
     loadCommunityDeedsForMap(newMapId);
+
+    // Load community guard towers
+    loadCommunityGuardTowersForMap(newMapId);
+
+    // Load community mission structures
+    loadCommunityMissionStructuresForMap(newMapId);
 }
 
 // Initialize on page load
@@ -773,6 +945,12 @@ initializeMapSelectorPanel();
 // Load community deeds
 loadCommunityDeedsForMap(initialMapId);
 
+// Load community guard towers
+loadCommunityGuardTowersForMap(initialMapId);
+
+// Load community mission structures
+loadCommunityMissionStructuresForMap(initialMapId);
+
 // Initialize layer manager panel
 initializeLayerManagerPanel();
 
@@ -782,6 +960,24 @@ if (communityDeedsToggle) {
     communityDeedsToggle.checked = communityDeedsVisible;
     communityDeedsToggle.addEventListener('change', () => {
         toggleCommunityDeeds();
+    });
+}
+
+// Community guard towers toggle setup
+const communityGuardTowersToggle = document.getElementById('community-guard-towers-toggle') as HTMLInputElement;
+if (communityGuardTowersToggle) {
+    communityGuardTowersToggle.checked = communityGuardTowersVisible;
+    communityGuardTowersToggle.addEventListener('change', () => {
+        toggleCommunityGuardTowers();
+    });
+}
+
+// Community mission structures toggle setup
+const communityMissionStructuresToggle = document.getElementById('community-mission-structures-toggle') as HTMLInputElement;
+if (communityMissionStructuresToggle) {
+    communityMissionStructuresToggle.checked = communityMissionStructuresVisible;
+    communityMissionStructuresToggle.addEventListener('change', () => {
+        toggleCommunityMissionStructures();
     });
 }
 

@@ -465,7 +465,13 @@ fn main() {
             user_layers_persistence::save_user_layers,
             community_deeds_persistence::load_community_deeds,
             community_deeds_persistence::save_community_deeds,
-            community_deeds_persistence::fetch_community_deeds
+            community_deeds_persistence::fetch_community_deeds,
+            community_deeds_persistence::load_community_guard_towers,
+            community_deeds_persistence::save_community_guard_towers,
+            community_deeds_persistence::fetch_community_guard_towers,
+            community_deeds_persistence::load_community_mission_structures,
+            community_deeds_persistence::save_community_mission_structures,
+            community_deeds_persistence::fetch_community_mission_structures
         ])
         .on_window_event(move |window, event| {
             use tauri::WindowEvent;
