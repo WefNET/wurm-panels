@@ -622,13 +622,17 @@ populateMapSelector();
 // Initialize map selector panel
 initializeMapSelectorPanel();
 
+// Initialize layer manager panel
+initializeLayerManagerPanel();
+
 // Panel management functions
 function initializeMapSelectorPanel() {
     const panel = document.getElementById('map-selector-panel') as HTMLElement;
     const toggleBtn = document.getElementById('panel-toggle') as HTMLButtonElement;
     const collapseBtn = document.getElementById('panel-collapse') as HTMLButtonElement;
+    const layerPanel = document.getElementById('layer-manager-panel') as HTMLElement;
 
-    if (!panel || !toggleBtn || !collapseBtn) return;
+    if (!panel || !toggleBtn || !collapseBtn || !layerPanel) return;
 
     // Load saved panel state
     const savedState = localStorage.getItem('wurmMapPanelExpanded');
@@ -636,6 +640,9 @@ function initializeMapSelectorPanel() {
 
     if (isExpanded) {
         panel.classList.remove('collapsed');
+        // Ensure layer panel is collapsed when map panel is expanded
+        layerPanel.classList.add('collapsed');
+        localStorage.setItem('wurmLayerPanelExpanded', 'false');
     } else {
         panel.classList.add('collapsed');
     }
@@ -646,9 +653,54 @@ function initializeMapSelectorPanel() {
         if (isCollapsed) {
             panel.classList.remove('collapsed');
             localStorage.setItem('wurmMapPanelExpanded', 'true');
+            // Collapse the layer panel when expanding map panel
+            layerPanel.classList.add('collapsed');
+            localStorage.setItem('wurmLayerPanelExpanded', 'false');
         } else {
             panel.classList.add('collapsed');
             localStorage.setItem('wurmMapPanelExpanded', 'false');
+        }
+    }
+
+    // Event listeners
+    toggleBtn.addEventListener('click', togglePanel);
+    collapseBtn.addEventListener('click', togglePanel);
+}
+
+// Layer manager panel management functions
+function initializeLayerManagerPanel() {
+    const panel = document.getElementById('layer-manager-panel') as HTMLElement;
+    const toggleBtn = document.getElementById('layer-panel-toggle') as HTMLButtonElement;
+    const collapseBtn = document.getElementById('layer-panel-collapse') as HTMLButtonElement;
+    const mapPanel = document.getElementById('map-selector-panel') as HTMLElement;
+
+    if (!panel || !toggleBtn || !collapseBtn || !mapPanel) return;
+
+    // Load saved panel state
+    const savedState = localStorage.getItem('wurmLayerPanelExpanded');
+    const isExpanded = savedState === 'true';
+
+    if (isExpanded) {
+        panel.classList.remove('collapsed');
+        // Ensure map panel is collapsed when layer panel is expanded
+        mapPanel.classList.add('collapsed');
+        localStorage.setItem('wurmMapPanelExpanded', 'false');
+    } else {
+        panel.classList.add('collapsed');
+    }
+
+    // Toggle panel visibility
+    function togglePanel() {
+        const isCollapsed = panel.classList.contains('collapsed');
+        if (isCollapsed) {
+            panel.classList.remove('collapsed');
+            localStorage.setItem('wurmLayerPanelExpanded', 'true');
+            // Collapse the map panel when expanding layer panel
+            mapPanel.classList.add('collapsed');
+            localStorage.setItem('wurmMapPanelExpanded', 'false');
+        } else {
+            panel.classList.add('collapsed');
+            localStorage.setItem('wurmLayerPanelExpanded', 'false');
         }
     }
 

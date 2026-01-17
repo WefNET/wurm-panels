@@ -176,12 +176,112 @@
             /* Removed rotation for emoji icon */
         }
 
-        .map-selector-panel.collapsed .panel-header {
+        .map-selector-panel.collapsed .panel-title,
+        .map-selector-panel.collapsed .panel-collapse {
+            display: none;
+        }
+
+        /* Layer Manager Panel Styles */
+        .layer-manager-panel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+            transition: transform 0.3s ease-in-out;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .layer-manager-panel.collapsed {
+            transform: translateX(-280px);
+        }
+
+        .layer-manager-panel .panel-header {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .layer-manager-panel .panel-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            display: none; /* Hidden by default */
+        }
+
+        .layer-manager-panel.collapsed .panel-toggle {
+            display: block; /* Only show when collapsed */
+        }
+
+        .layer-manager-panel .panel-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .layer-manager-panel .panel-collapse {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            margin-left: auto;
+        }
+
+        .layer-manager-panel .panel-collapse:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .layer-manager-panel .panel-title {
+            color: white;
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .layer-manager-panel .panel-content {
+            padding: 15px;
+            overflow-y: auto;
+            height: calc(100% - 60px); /* Adjust for header height */
+        }
+
+        /* Expand button when collapsed */
+        .layer-manager-panel.collapsed .panel-toggle {
+            position: absolute;
+            right: -40px;
+            top: 140px; /* Just under the map selector's 90px */
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-left: none;
+            border-radius: 0 4px 4px 0;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .layer-manager-panel.collapsed .panel-header {
             justify-content: center;
         }
 
-        .map-selector-panel.collapsed .panel-title,
-        .map-selector-panel.collapsed .panel-collapse {
+        .layer-manager-panel.collapsed .panel-title,
+        .layer-manager-panel.collapsed .panel-collapse {
+            display: none;
+        }
+
+        /* Hide layer manager toggle when map selector is expanded */
+        .map-selector-panel:not(.collapsed) ~ .layer-manager-panel.collapsed .panel-toggle {
             display: none;
         }
     </style>
@@ -190,7 +290,7 @@
 <body>
     <div id="map"></div>
 
-    <!-- Map Selector Panel -->
+    <!-- Map Selector Swing Out Panel -->
     <div id="map-selector-panel" class="map-selector-panel collapsed">
         <div class="panel-header">
             <button id="panel-toggle" class="panel-toggle" title="Toggle Map Selector">
@@ -217,18 +317,29 @@
         </div>
     </div>
 
-    <div id="layer-manager">
-        <h2>User Layers</h2>
-        <ul id="layer-list">
-        </ul>
-        <div class="form-container">
-            <input type="text" id="new-layer-name" placeholder="New layer name" />
-            <button id="add-layer-btn">Add Layer</button>
+    <!-- Layer Manager Swing Out Panel -->
+    <div id="layer-manager-panel" class="layer-manager-panel collapsed">
+        <div class="panel-header">
+            <button id="layer-panel-toggle" class="panel-toggle" title="Toggle Layer Manager">
+                <span class="toggle-icon">📍</span>
+            </button>
+            <h3 class="panel-title">User Layers</h3>
+            <button id="layer-panel-collapse" class="panel-collapse" title="Collapse Panel">
+                <span class="collapse-icon">◀</span>
+            </button>
         </div>
-        <div id="drawing-controls">
-            <h3>Drawing</h3>
-            <button id="draw-point-btn">Add Point</button>
-            <p>Select a layer and click "Add Point", then click on the map.</p>
+        <div class="panel-content">
+            <ul id="layer-list">
+            </ul>
+            <div class="form-container">
+                <input type="text" id="new-layer-name" placeholder="New layer name" />
+                <button id="add-layer-btn">Add Layer</button>
+            </div>
+            <div id="drawing-controls">
+                <h3>Drawing</h3>
+                <button id="draw-point-btn">Add Point</button>
+                <p>Select a layer and click "Add Point", then click on the map.</p>
+            </div>
         </div>
     </div>
 
