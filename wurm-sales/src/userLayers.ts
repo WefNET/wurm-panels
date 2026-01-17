@@ -80,10 +80,10 @@ const iconStyles = {
             stroke: new Stroke({ color: '#ff0000', width: 2 })
         })
     }),
-    house: new Style({
+    deed: new Style({
         image: new Icon({
             anchor: [0.5, 1],
-            src: 'https://api.iconify.design/mdi/home.svg?color=%23ffffff', // White house icon
+            src: 'https://api.iconify.design/mdi/home.svg?color=%23ffffff', // White house icon for deeds
             scale: 1.5
         })
     }),
@@ -94,10 +94,31 @@ const iconStyles = {
             scale: 1.5
         })
     }),
-    cave: new Style({
+    archaeology: new Style({
         image: new Icon({
             anchor: [0.5, 0.5],
-            src: 'https://api.iconify.design/game-icons/cave-entrance.svg?color=%23ffffff', // White cave icon
+            src: 'https://api.iconify.design/mdi/shovel.svg?color=%23ffffff', // White shovel icon for archaeology
+            scale: 1.5
+        })
+    }),
+    tower: new Style({
+        image: new Icon({
+            anchor: [0.5, 1],
+            src: 'https://api.iconify.design/mdi/tower-fire.svg?color=%23ffffff', // White tower icon
+            scale: 1.5
+        })
+    }),
+    mission_structure: new Style({
+        image: new Icon({
+            anchor: [0.5, 0.5],
+            src: 'https://api.iconify.design/game-icons/scroll-unfurled.svg?color=%23ffffff', // White scroll icon for missions
+            scale: 1.5
+        })
+    }),
+    forest: new Style({
+        image: new Icon({
+            anchor: [0.5, 0.5],
+            src: 'https://api.iconify.design/mdi/tree.svg?color=%23ffffff', // White tree icon for forests
             scale: 1.5
         })
     })
