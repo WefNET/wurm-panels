@@ -20,6 +20,8 @@ gdal2tiles.py -p raster --xyz -z 0-5 --jpeg 80 -w none Independence-terrain-2025
 gdal2tiles.py -p raster --xyz -z 0-4 --jpeg 80 -w none Celebration-terrain-20250226.png Celebration-terrain-20250226
 
 gdal2tiles.py -p raster --xyz -z 0-4 --jpeg 80 -w none Deliverance-terrain-20250226.png Deliverance-terrain-20250226
+gdal2tiles.py -p raster --xyz -z 0-4 --jpeg 80 -w none Deliverance-topo-20250226.png Deliverance-topo-20250226
+
 gdal2tiles.py -p raster --xyz -z 0-4 --jpeg 80 -w none Deliverance-terrain_161101.png Deliverance-terrain-20161101
 
 ```
@@ -34,6 +36,8 @@ rclone copy Independence-terrain-20250226 wurm-map-tiles:wurm-tiled-maps/indepen
 rclone copy Celebration-terrain-20250226 wurm-map-tiles:wurm-tiled-maps/celebration/2025/terrain --progress --transfers 16 --checkers 16 --fast-list
 
 rclone copy Deliverance-terrain-20250226 wurm-map-tiles:wurm-tiled-maps/deliverance/2025/terrain --progress --transfers 16 --checkers 16 --fast-list
+
+rclone copy Deliverance-topo-20250226 wurm-map-tiles:wurm-tiled-maps/deliverance/2025/topo --progress --transfers 16 --checkers 16 --fast-list
 
 rclone copy Deliverance-terrain-20161101 wurm-map-tiles:wurm-tiled-maps/deliverance/2016/terrain --progress --transfers 16 --checkers 16 --fast-list
 ```

@@ -138,6 +138,16 @@ export const MAPS: Record<string, MapConfig> = {
                 year: 2025
             },
             {
+                id: 'topological-2025',
+                name: 'Topological (2025)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/deliverance/2025/topo/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "topological",
+                year: 2025
+            },
+            {
                 id: 'terrain-2016',
                 name: 'Terrain (2016)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/deliverance/2016/terrain/{z}/{x}/{y}.png',
