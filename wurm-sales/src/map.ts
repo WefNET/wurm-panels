@@ -101,23 +101,23 @@ async function loadCommunityDeedsForMap(mapId: string) {
             console.log('Fetched deeds:', deeds.length);
             await saveCommunityDeeds(mapId, deeds);
         }
-        // Create features
-        const features = deeds.map(deed => {
-            const x = deed.coords[0];
-            const y = mapConfig.extent[3] - deed.coords[1]; // Flip Y
+        // Create features - filter out unwanted deed types first
+        const features = deeds
+            .filter(deed => deed.deedType !== 'STA') // Skip STA deeds
+            .map(deed => {
+                const x = deed.coords[0];
+                const y = mapConfig.extent[3] - deed.coords[1]; // Flip Y
 
-            const feature = new Feature({
-                geometry: new Point([x, y]),
-                name: deed.name,
-                type: deed.deedType,
-                extra: deed.extra
-            });
+                const feature = new Feature({
+                    geometry: new Point([x, y]),
+                    name: deed.name,
+                    type: deed.deedType,
+                    extra: deed.extra
+                });
 
             // Style based on type
             let color = 'blue'; // Default
-            if (deed.deedType === 'MissionStructure') {
-                color = 'red';
-            } else if (deed.deedType === 'GuardTowerFreedom') {
+            if (deed.deedType === 'MAR') {
                 color = 'green';
             }
 
