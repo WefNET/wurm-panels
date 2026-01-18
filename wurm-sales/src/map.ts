@@ -10,10 +10,10 @@ import { defaults as defaultControls } from 'ol/control';
 import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import Feature from 'ol/Feature';
-import { Point, Geometry } from 'ol/geom';
+import { Point, LineString, Geometry } from 'ol/geom';
 import { Style, Stroke, Fill, Text, Circle as CircleStyle } from 'ol/style';
 import { addUserLayer, toggleUserLayer, getUserLayers, UserLayer, addFeatureToLayer, loadAndRenderUserLayers, setCurrentMapId, removeFeatureFromLayer } from './userLayers';
-import { fetchCommunityDeeds, loadCommunityDeeds, saveCommunityDeeds, fetchCommunityGuardTowers, loadCommunityGuardTowers, saveCommunityGuardTowers, fetchCommunityMissionStructures, loadCommunityMissionStructures, saveCommunityMissionStructures } from './communityDeeds';
+import { fetchCommunityDeeds, loadCommunityDeeds, saveCommunityDeeds, fetchCommunityGuardTowers, loadCommunityGuardTowers, saveCommunityGuardTowers, fetchCommunityMissionStructures, loadCommunityMissionStructures, saveCommunityMissionStructures, fetchCommunityBridges, loadCommunityBridges, saveCommunityBridges } from './communityDeeds';
 import { Draw } from 'ol/interaction';
 import { getMapConfig, getAllMaps } from './mapConfigs';
 
@@ -36,6 +36,10 @@ communityGuardTowersVisible = localStorage.getItem('communityGuardTowersVisible'
 let communityMissionStructuresLayer: VectorLayer<VectorSource> | null = null;
 let communityMissionStructuresVisible = true; // Default visible
 communityMissionStructuresVisible = localStorage.getItem('communityMissionStructuresVisible') !== 'false';
+
+let communityBridgesLayer: VectorLayer<VectorSource> | null = null;
+let communityBridgesVisible = true; // Default visible
+communityBridgesVisible = localStorage.getItem('communityBridgesVisible') !== 'false';
 
 // Zoom level threshold for showing labels (only show labels when zoomed in close)
 const LABEL_ZOOM_THRESHOLD = 4;
@@ -223,6 +227,16 @@ function hideCommunityMissionStructuresLoading() {
     if (indicator) indicator.style.display = 'none';
 }
 
+function showCommunityBridgesLoading() {
+    const indicator = document.getElementById('community-bridges-loading');
+    if (indicator) indicator.style.display = 'inline';
+}
+
+function hideCommunityBridgesLoading() {
+    const indicator = document.getElementById('community-bridges-loading');
+    if (indicator) indicator.style.display = 'none';
+}
+
 async function loadCommunityGuardTowersForMap(mapId: string) {
     const mapConfig = getMapConfig(mapId);
     if (!mapConfig || !mapConfig.communityMapUrl) {
@@ -397,6 +411,95 @@ function toggleCommunityMissionStructures() {
     }
     // Save to localStorage
     localStorage.setItem('communityMissionStructuresVisible', communityMissionStructuresVisible.toString());
+}
+
+async function loadCommunityBridgesForMap(mapId: string) {
+    const mapConfig = getMapConfig(mapId);
+    if (!mapConfig || !mapConfig.communityMapUrl) {
+        console.log('No communityMapUrl for map:', mapId);
+        return;
+    }
+    console.log('Loading community bridges for:', mapId);
+    showCommunityBridgesLoading();
+    try {
+        let bridges = await loadCommunityBridges(mapId);
+        console.log('Loaded bridges from file:', bridges?.length ?? 0);
+        if (!bridges) {
+            // Fetch from URL
+            console.log('Fetching bridges from URL');
+            bridges = await fetchCommunityBridges(mapConfig.communityMapUrl);
+            console.log('Fetched bridges:', bridges.length);
+            await saveCommunityBridges(mapId, bridges);
+        }
+        // Create features
+        const features = bridges.map(bridge => {
+            const startX = bridge.coords[0][0];
+            const startY = mapConfig.extent[3] - bridge.coords[0][1]; // Flip Y
+            const endX = bridge.coords[1][0];
+            const endY = mapConfig.extent[3] - bridge.coords[1][1]; // Flip Y
+
+            const feature = new Feature({
+                geometry: new LineString([[startX, startY], [endX, endY]]),
+                name: bridge.name
+            });
+
+            return feature;
+        });
+
+        console.log('Created bridge features:', features.length);
+
+        // Create or update layer
+        if (communityBridgesLayer) {
+            communityBridgesLayer.getSource()?.clear();
+            communityBridgesLayer.getSource()?.addFeatures(features);
+        } else {
+            communityBridgesLayer = new VectorLayer({
+                source: new VectorSource({
+                    features: features
+                }),
+                style: (feature) => {
+                    const zoom = map!.getView().getZoom() || 0;
+                    const shouldShowLabels = zoom >= LABEL_ZOOM_THRESHOLD;
+                    const name = feature.get('name') || '';
+                    const text = shouldShowLabels && name ? name : '';
+
+                    return new Style({
+                        stroke: new Stroke({
+                            color: 'rgba(139, 69, 19, 0.7)', // Brown color for bridges
+                            width: 6
+                        }),
+                        text: new Text({
+                            text: text,
+                            font: '12px Calibri,sans-serif',
+                            fill: new Fill({ color: '#fff' }),
+                            stroke: new Stroke({
+                                color: '#000',
+                                width: 2
+                            }),
+                            offsetY: -10
+                        })
+                    });
+                },
+                zIndex: 50, // Above tile layers but below all community layers
+                visible: communityBridgesVisible
+            });
+            map.addLayer(communityBridgesLayer);
+        }
+        console.log('Added community bridges layer');
+    } catch (e) {
+        console.error('Failed to load community bridges:', e);
+    } finally {
+        hideCommunityBridgesLoading();
+    }
+}
+
+function toggleCommunityBridges() {
+    communityBridgesVisible = !communityBridgesVisible;
+    if (communityBridgesLayer) {
+        communityBridgesLayer.setVisible(communityBridgesVisible);
+    }
+    // Save to localStorage
+    localStorage.setItem('communityBridgesVisible', communityBridgesVisible.toString());
 }
 
 /**
@@ -967,6 +1070,7 @@ function switchMap(newMapId: string) {
     communityDeedsLayer = null;
     communityGuardTowersLayer = null;
     communityMissionStructuresLayer = null;
+    communityBridgesLayer = null;
 
     // Initialize new map
     map = initializeMap(newMapId);
@@ -979,6 +1083,9 @@ function switchMap(newMapId: string) {
 
     // Load community mission structures
     loadCommunityMissionStructuresForMap(newMapId);
+
+    // Load community bridges
+    loadCommunityBridgesForMap(newMapId);
 }
 
 // Initialize on page load
@@ -1018,6 +1125,9 @@ loadCommunityGuardTowersForMap(initialMapId);
 // Load community mission structures
 loadCommunityMissionStructuresForMap(initialMapId);
 
+// Load community bridges
+loadCommunityBridgesForMap(initialMapId);
+
 // Initialize layer manager panel
 initializeLayerManagerPanel();
 
@@ -1045,6 +1155,15 @@ if (communityMissionStructuresToggle) {
     communityMissionStructuresToggle.checked = communityMissionStructuresVisible;
     communityMissionStructuresToggle.addEventListener('change', () => {
         toggleCommunityMissionStructures();
+    });
+}
+
+// Community bridges toggle setup
+const communityBridgesToggle = document.getElementById('community-bridges-toggle') as HTMLInputElement;
+if (communityBridgesToggle) {
+    communityBridgesToggle.checked = communityBridgesVisible;
+    communityBridgesToggle.addEventListener('change', () => {
+        toggleCommunityBridges();
     });
 }
 

@@ -54,3 +54,22 @@ export async function loadCommunityMissionStructures(mapId: string): Promise<Com
 export async function saveCommunityMissionStructures(mapId: string, structures: CommunityStructure[]) {
     await invoke('save_community_mission_structures', { mapId, structures });
 }
+
+export interface CommunityBridge {
+    name: string;
+    coords: [[number, number], [number, number]]; // [start, end] coordinates
+}
+
+export async function fetchCommunityBridges(url: string): Promise<CommunityBridge[]> {
+    console.log('Fetching community bridges from:', url);
+    return await invoke('fetch_community_bridges', { url });
+}
+
+export async function loadCommunityBridges(mapId: string): Promise<CommunityBridge[] | null> {
+    const result = await invoke('load_community_bridges', { mapId }) as { bridges: CommunityBridge[], fetchedAt: number } | null;
+    return result ? result.bridges : null;
+}
+
+export async function saveCommunityBridges(mapId: string, bridges: CommunityBridge[]) {
+    await invoke('save_community_bridges', { mapId, bridges });
+}
