@@ -901,6 +901,11 @@ function switchMap(newMapId: string) {
     currentFeature = null;
     currentFeatureLayer = null;
 
+    // Reset community layer references when switching maps
+    communityDeedsLayer = null;
+    communityGuardTowersLayer = null;
+    communityMissionStructuresLayer = null;
+
     // Initialize new map
     map = initializeMap(newMapId);
 

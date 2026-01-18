@@ -52,7 +52,8 @@ export const MAPS: Record<string, MapConfig> = {
                 year: 2025
             }
         ],
-        startingLocations: []
+        startingLocations: [],
+        communityMapUrl: "https://celebration.yaga.host"
     },
     deliverance: {
         id: 'deliverance',
@@ -91,7 +92,8 @@ export const MAPS: Record<string, MapConfig> = {
                 year: 2016
             }
         ],
-        startingLocations: []
+        startingLocations: [],
+        communityMapUrl: "https://deliverance.yaga.host"
     },
     independence: {
         id: 'independence',
@@ -112,7 +114,8 @@ export const MAPS: Record<string, MapConfig> = {
         ],
         startingLocations: [
             // Add starting locations for Independence
-        ]
+        ],
+        communityMapUrl: "https://independence.yaga.host"
     },
     xanadu: {
         id: 'xanadu',
