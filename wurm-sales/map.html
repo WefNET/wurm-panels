@@ -272,6 +272,18 @@
             cursor: pointer;
         }
 
+        .loading-indicator {
+            margin-left: 8px;
+            color: #4a9eff;
+            font-size: 12px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         /* Expand button when collapsed */
         .layer-manager-panel.collapsed .panel-toggle {
             position: absolute;
@@ -394,18 +406,21 @@
                 <label>
                     <input type="checkbox" id="community-deeds-toggle" checked />
                     Community Deeds
+                    <span id="community-deeds-loading" class="loading-indicator" style="display: none;">⟳</span>
                 </label>
             </div>
             <div class="layer-toggle">
                 <label>
                     <input type="checkbox" id="community-guard-towers-toggle" checked />
                     Community Guard Towers
+                    <span id="community-guard-towers-loading" class="loading-indicator" style="display: none;">⟳</span>
                 </label>
             </div>
             <div class="layer-toggle">
                 <label>
                     <input type="checkbox" id="community-mission-structures-toggle" checked />
                     Community Mission Structures
+                    <span id="community-mission-structures-loading" class="loading-indicator" style="display: none;">⟳</span>
                 </label>
             </div>
             <ul id="layer-list">

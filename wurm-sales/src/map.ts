@@ -37,6 +37,9 @@ let communityMissionStructuresLayer: VectorLayer<VectorSource> | null = null;
 let communityMissionStructuresVisible = true; // Default visible
 communityMissionStructuresVisible = localStorage.getItem('communityMissionStructuresVisible') !== 'false';
 
+// Zoom level threshold for showing labels (only show labels when zoomed in close)
+const LABEL_ZOOM_THRESHOLD = 4;
+
 // Helper functions
 function getYearsForIsland(island: string) {
     const maps = getAllMaps();
@@ -99,6 +102,7 @@ async function loadCommunityDeedsForMap(mapId: string) {
         return;
     }
     console.log('Loading community deeds for:', mapId);
+    showCommunityDeedsLoading();
     try {
         let deeds = await loadCommunityDeeds(mapId);
         console.log('Loaded deeds from file:', deeds?.length ?? 0);
@@ -123,32 +127,14 @@ async function loadCommunityDeedsForMap(mapId: string) {
                     extra: deed.extra
                 });
 
-            // Style based on type
-            let color = 'blue'; // Default
-            if (deed.deedType === 'MAR') {
-                color = 'green';
-            }
+                // Style based on type
+                let color = 'blue'; // Default
+                if (deed.deedType === 'MAR') {
+                    color = 'green';
+                }
 
-            feature.setStyle(new Style({
-                image: new CircleStyle({
-                    radius: 6,
-                    fill: new Fill({ color: `rgba(${color === 'blue' ? '0,0,255' : color === 'red' ? '255,0,0' : '0,255,0'}, 0.6)` }),
-                    stroke: new Stroke({ color: color, width: 2 })
-                }),
-                text: new Text({
-                    text: deed.name,
-                    font: '12px Calibri,sans-serif',
-                    fill: new Fill({ color: '#fff' }),
-                    stroke: new Stroke({
-                        color: '#000',
-                        width: 2
-                    }),
-                    offsetY: -15
-                })
-            }));
-
-            return feature;
-        });
+                return feature;
+            });
 
         console.log('Created features:', features.length);
 
@@ -161,6 +147,36 @@ async function loadCommunityDeedsForMap(mapId: string) {
                 source: new VectorSource({
                     features: features
                 }),
+                style: (feature, resolution) => {
+                    const zoom = map!.getView().getZoom() || 0;
+                    const shouldShowLabels = zoom >= LABEL_ZOOM_THRESHOLD;
+                    const name = feature.get('name') || '';
+                    const text = shouldShowLabels ? name : '';
+
+                    // Style based on type
+                    let color = 'blue'; // Default
+                    if (feature.get('type') === 'MAR') {
+                        color = 'green';
+                    }
+
+                    return new Style({
+                        image: new CircleStyle({
+                            radius: 6,
+                            fill: new Fill({ color: `rgba(${color === 'blue' ? '0,0,255' : color === 'red' ? '255,0,0' : '0,255,0'}, 0.6)` }),
+                            stroke: new Stroke({ color: color, width: 2 })
+                        }),
+                        text: new Text({
+                            text: text,
+                            font: '12px Calibri,sans-serif',
+                            fill: new Fill({ color: '#fff' }),
+                            stroke: new Stroke({
+                                color: '#000',
+                                width: 2
+                            }),
+                            offsetY: -15
+                        })
+                    });
+                },
                 visible: communityDeedsVisible
             });
             map.addLayer(communityDeedsLayer);
@@ -168,6 +184,8 @@ async function loadCommunityDeedsForMap(mapId: string) {
         console.log('Added community deeds layer');
     } catch (e) {
         console.error('Failed to load community deeds:', e);
+    } finally {
+        hideCommunityDeedsLoading();
     }
 }
 
@@ -180,6 +198,36 @@ function toggleCommunityDeeds() {
     localStorage.setItem('communityDeedsVisible', communityDeedsVisible.toString());
 }
 
+function showCommunityDeedsLoading() {
+    const indicator = document.getElementById('community-deeds-loading');
+    if (indicator) indicator.style.display = 'inline';
+}
+
+function hideCommunityDeedsLoading() {
+    const indicator = document.getElementById('community-deeds-loading');
+    if (indicator) indicator.style.display = 'none';
+}
+
+function showCommunityGuardTowersLoading() {
+    const indicator = document.getElementById('community-guard-towers-loading');
+    if (indicator) indicator.style.display = 'inline';
+}
+
+function hideCommunityGuardTowersLoading() {
+    const indicator = document.getElementById('community-guard-towers-loading');
+    if (indicator) indicator.style.display = 'none';
+}
+
+function showCommunityMissionStructuresLoading() {
+    const indicator = document.getElementById('community-mission-structures-loading');
+    if (indicator) indicator.style.display = 'inline';
+}
+
+function hideCommunityMissionStructuresLoading() {
+    const indicator = document.getElementById('community-mission-structures-loading');
+    if (indicator) indicator.style.display = 'none';
+}
+
 async function loadCommunityGuardTowersForMap(mapId: string) {
     const mapConfig = getMapConfig(mapId);
     if (!mapConfig || !mapConfig.communityMapUrl) {
@@ -187,6 +235,7 @@ async function loadCommunityGuardTowersForMap(mapId: string) {
         return;
     }
     console.log('Loading community guard towers for:', mapId);
+    showCommunityGuardTowersLoading();
     try {
         let structures = await loadCommunityGuardTowers(mapId);
         console.log('Loaded guard towers from file:', structures?.length ?? 0);
@@ -208,24 +257,6 @@ async function loadCommunityGuardTowersForMap(mapId: string) {
                 type: structure.structureType
             });
 
-            feature.setStyle(new Style({
-                image: new CircleStyle({
-                    radius: 8,
-                    fill: new Fill({ color: 'rgba(255, 140, 0, 0.6)' }), // Orange
-                    stroke: new Stroke({ color: '#FF8C00', width: 2 })
-                }),
-                text: new Text({
-                    text: structure.name,
-                    font: '12px Calibri,sans-serif',
-                    fill: new Fill({ color: '#fff' }),
-                    stroke: new Stroke({
-                        color: '#000',
-                        width: 2
-                    }),
-                    offsetY: -18
-                })
-            }));
-
             return feature;
         });
 
@@ -240,6 +271,30 @@ async function loadCommunityGuardTowersForMap(mapId: string) {
                 source: new VectorSource({
                     features: features
                 }),
+                style: (feature, resolution) => {
+                    const zoom = map!.getView().getZoom() || 0;
+                    const shouldShowLabels = zoom >= LABEL_ZOOM_THRESHOLD;
+                    const name = feature.get('name') || '';
+                    const text = shouldShowLabels ? name : '';
+
+                    return new Style({
+                        image: new CircleStyle({
+                            radius: 8,
+                            fill: new Fill({ color: 'rgba(255, 140, 0, 0.6)' }), // Orange
+                            stroke: new Stroke({ color: '#FF8C00', width: 2 })
+                        }),
+                        text: new Text({
+                            text: text,
+                            font: '12px Calibri,sans-serif',
+                            fill: new Fill({ color: '#fff' }),
+                            stroke: new Stroke({
+                                color: '#000',
+                                width: 2
+                            }),
+                            offsetY: -18
+                        })
+                    });
+                },
                 visible: communityGuardTowersVisible
             });
             map.addLayer(communityGuardTowersLayer);
@@ -247,6 +302,8 @@ async function loadCommunityGuardTowersForMap(mapId: string) {
         console.log('Added community guard towers layer');
     } catch (e) {
         console.error('Failed to load community guard towers:', e);
+    } finally {
+        hideCommunityGuardTowersLoading();
     }
 }
 
@@ -266,6 +323,7 @@ async function loadCommunityMissionStructuresForMap(mapId: string) {
         return;
     }
     console.log('Loading community mission structures for:', mapId);
+    showCommunityMissionStructuresLoading();
     try {
         let structures = await loadCommunityMissionStructures(mapId);
         console.log('Loaded mission structures from file:', structures?.length ?? 0);
@@ -287,24 +345,6 @@ async function loadCommunityMissionStructuresForMap(mapId: string) {
                 type: structure.structureType
             });
 
-            feature.setStyle(new Style({
-                image: new CircleStyle({
-                    radius: 7,
-                    fill: new Fill({ color: 'rgba(255, 0, 255, 0.6)' }), // Magenta
-                    stroke: new Stroke({ color: '#FF00FF', width: 2 })
-                }),
-                text: new Text({
-                    text: structure.name,
-                    font: '12px Calibri,sans-serif',
-                    fill: new Fill({ color: '#fff' }),
-                    stroke: new Stroke({
-                        color: '#000',
-                        width: 2
-                    }),
-                    offsetY: -16
-                })
-            }));
-
             return feature;
         });
 
@@ -319,6 +359,30 @@ async function loadCommunityMissionStructuresForMap(mapId: string) {
                 source: new VectorSource({
                     features: features
                 }),
+                style: (feature, resolution) => {
+                    const zoom = map!.getView().getZoom() || 0;
+                    const shouldShowLabels = zoom >= LABEL_ZOOM_THRESHOLD;
+                    const name = feature.get('name') || '';
+                    const text = shouldShowLabels ? name : '';
+
+                    return new Style({
+                        image: new CircleStyle({
+                            radius: 7,
+                            fill: new Fill({ color: 'rgba(255, 0, 255, 0.6)' }), // Magenta
+                            stroke: new Stroke({ color: '#FF00FF', width: 2 })
+                        }),
+                        text: new Text({
+                            text: text,
+                            font: '12px Calibri,sans-serif',
+                            fill: new Fill({ color: '#fff' }),
+                            stroke: new Stroke({
+                                color: '#000',
+                                width: 2
+                            }),
+                            offsetY: -16
+                        })
+                    });
+                },
                 visible: communityMissionStructuresVisible
             });
             map.addLayer(communityMissionStructuresLayer);
@@ -326,6 +390,8 @@ async function loadCommunityMissionStructuresForMap(mapId: string) {
         console.log('Added community mission structures layer');
     } catch (e) {
         console.error('Failed to load community mission structures:', e);
+    } finally {
+        hideCommunityMissionStructuresLoading();
     }
 }
 
