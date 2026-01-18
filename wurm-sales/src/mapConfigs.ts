@@ -133,23 +133,6 @@ export const MAPS: Record<string, MapConfig> = {
                 mapType: "terrain",
                 year: 2025
             },
-            // Add more tile layers here as they become available
-            // {
-            //     id: 'roads',
-            //     name: 'Roads Overlay',
-            //     urlTemplate: 'https://.../{z}/{x}/{y}.png',
-            //     zoomLevels: 7,
-            //     enabled: false,
-            //     opacity: 0.8
-            // },
-            // {
-            //     id: 'deeds',
-            //     name: 'Deeds',
-            //     urlTemplate: 'https://.../{z}/{x}/{y}.png',
-            //     zoomLevels: 7,
-            //     enabled: false,
-            //     opacity: 0.7
-            // }
         ],
         startingLocations: [
             { name: 'Summerholt', coords: [6602, 2252] },

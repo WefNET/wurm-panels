@@ -155,7 +155,7 @@ async function loadCommunityDeedsForMap(mapId: string) {
 
                     return new Style({
                         image: new CircleStyle({
-                            radius: 6,
+                            radius: 8,
                             fill: new Fill({ color: `rgba(${color === 'blue' ? '0,0,255' : color === 'red' ? '255,0,0' : '0,255,0'}, 0.6)` }),
                             stroke: new Stroke({ color: color, width: 2 })
                         }),
@@ -171,6 +171,7 @@ async function loadCommunityDeedsForMap(mapId: string) {
                         })
                     });
                 },
+                zIndex: 500, // Position above other community layers but below starting locations
                 visible: communityDeedsVisible
             });
             map.addLayer(communityDeedsLayer);
@@ -497,6 +498,7 @@ function initializeMap(mapId: string) {
         source: new VectorSource({
             features: startingLocationFeatures
         }),
+        zIndex: 1000, // Ensure starting locations render on top of all other layers
         properties: {
             'willReadFrequently': true
         }
