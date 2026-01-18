@@ -127,12 +127,6 @@ async function loadCommunityDeedsForMap(mapId: string) {
                     extra: deed.extra
                 });
 
-                // Style based on type
-                let color = 'blue'; // Default
-                if (deed.deedType === 'MAR') {
-                    color = 'green';
-                }
-
                 return feature;
             });
 
@@ -147,7 +141,7 @@ async function loadCommunityDeedsForMap(mapId: string) {
                 source: new VectorSource({
                     features: features
                 }),
-                style: (feature, resolution) => {
+                style: (feature) => {
                     const zoom = map!.getView().getZoom() || 0;
                     const shouldShowLabels = zoom >= LABEL_ZOOM_THRESHOLD;
                     const name = feature.get('name') || '';
@@ -271,7 +265,7 @@ async function loadCommunityGuardTowersForMap(mapId: string) {
                 source: new VectorSource({
                     features: features
                 }),
-                style: (feature, resolution) => {
+                style: (feature) => {
                     const zoom = map!.getView().getZoom() || 0;
                     const shouldShowLabels = zoom >= LABEL_ZOOM_THRESHOLD;
                     const name = feature.get('name') || '';
@@ -359,7 +353,7 @@ async function loadCommunityMissionStructuresForMap(mapId: string) {
                 source: new VectorSource({
                     features: features
                 }),
-                style: (feature, resolution) => {
+                style: (feature) => {
                     const zoom = map!.getView().getZoom() || 0;
                     const shouldShowLabels = zoom >= LABEL_ZOOM_THRESHOLD;
                     const name = feature.get('name') || '';
