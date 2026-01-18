@@ -95,3 +95,7 @@ export async function loadCommunityMapObjects(mapId: string): Promise<CommunityT
 export async function saveCommunityMapObjects(mapId: string, objects: CommunityTunnelObject[]) {
     await invoke('save_community_map_objects', { mapId, objects });
 }
+
+export async function updateWindowTitle(windowLabel: string, title: string): Promise<void> {
+    await invoke('update_window_title', { windowLabel, title });
+}

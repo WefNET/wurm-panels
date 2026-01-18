@@ -13,7 +13,7 @@ import Feature from 'ol/Feature';
 import { Point, LineString, Geometry } from 'ol/geom';
 import { Style, Stroke, Fill, Text, Circle as CircleStyle } from 'ol/style';
 import { addUserLayer, toggleUserLayer, getUserLayers, UserLayer, addFeatureToLayer, loadAndRenderUserLayers, setCurrentMapId, removeFeatureFromLayer } from './userLayers';
-import { fetchCommunityDeeds, loadCommunityDeeds, saveCommunityDeeds, fetchCommunityGuardTowers, loadCommunityGuardTowers, saveCommunityGuardTowers, fetchCommunityMissionStructures, loadCommunityMissionStructures, saveCommunityMissionStructures, fetchCommunityBridges, loadCommunityBridges, saveCommunityBridges, fetchCommunityMapObjects, loadCommunityMapObjects, saveCommunityMapObjects, CommunityTunnelObject } from './communityDeeds';
+import { fetchCommunityDeeds, loadCommunityDeeds, saveCommunityDeeds, fetchCommunityGuardTowers, loadCommunityGuardTowers, saveCommunityGuardTowers, fetchCommunityMissionStructures, loadCommunityMissionStructures, saveCommunityMissionStructures, fetchCommunityBridges, loadCommunityBridges, saveCommunityBridges, fetchCommunityMapObjects, loadCommunityMapObjects, saveCommunityMapObjects, updateWindowTitle, CommunityTunnelObject } from './communityDeeds';
 import { Draw } from 'ol/interaction';
 import { getMapConfig, getAllMaps } from './mapConfigs';
 
@@ -1177,6 +1177,10 @@ function populateMapSelector() {
                         source.refresh();
                     }
                 }
+
+                // Update window title when switching terrain/topological
+                const title = `${maps.find(m => m.id === currentMapId)?.name || 'Unknown'} ${selectedYear} ${selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}`;
+                updateWindowTitle('map', title).catch(err => console.error('Failed to update window title:', err));
             }
         }
     }
@@ -1221,6 +1225,13 @@ function switchMap(newMapId: string) {
 
     // Initialize new map
     map = initializeMap(newMapId);
+
+    // Update window title with current map selection
+    const mapConfig = getMapConfig(newMapId);
+    if (mapConfig) {
+        const title = `${mapConfig.name} ${selectedYear} ${selectedType.charAt(0).toUpperCase() + selectedType.slice(1)}`;
+        updateWindowTitle('map', title).catch(err => console.error('Failed to update window title:', err));
+    }
 
     // Load community deeds
     loadCommunityDeedsForMap(newMapId);

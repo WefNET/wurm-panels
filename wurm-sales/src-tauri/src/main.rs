@@ -294,6 +294,20 @@ async fn get_granger_entries(
 }
 
 #[tauri::command]
+async fn update_window_title(
+    app: tauri::AppHandle,
+    window_label: String,
+    title: String,
+) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window(&window_label) {
+        window
+            .set_title(&title)
+            .map_err(|err| format!("Failed to update window title: {:?}", err))?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
 async fn open_watcher_window(app: tauri::AppHandle) -> Result<(), String> {
     if let Some(existing) = app.get_webview_window("watcher") {
         println!("Watcher window already open; showing existing instance");
@@ -461,6 +475,7 @@ fn main() {
             verify_session,
             update_settings,
             set_always_on_top,
+            update_window_title,
             user_layers_persistence::load_user_layers,
             user_layers_persistence::save_user_layers,
             community_deeds_persistence::load_community_deeds,
