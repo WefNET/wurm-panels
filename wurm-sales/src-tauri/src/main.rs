@@ -474,7 +474,10 @@ fn main() {
             community_deeds_persistence::fetch_community_mission_structures,
             community_deeds_persistence::load_community_bridges,
             community_deeds_persistence::save_community_bridges,
-            community_deeds_persistence::fetch_community_bridges
+            community_deeds_persistence::fetch_community_bridges,
+            community_deeds_persistence::load_community_map_objects,
+            community_deeds_persistence::save_community_map_objects,
+            community_deeds_persistence::fetch_community_map_objects
         ])
         .on_window_event(move |window, event| {
             use tauri::WindowEvent;

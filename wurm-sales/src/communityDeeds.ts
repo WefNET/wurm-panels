@@ -73,3 +73,25 @@ export async function loadCommunityBridges(mapId: string): Promise<CommunityBrid
 export async function saveCommunityBridges(mapId: string, bridges: CommunityBridge[]) {
     await invoke('save_community_bridges', { mapId, bridges });
 }
+
+export interface CommunityMapObject {
+    name: string;
+    startCoords: [number, number];
+    endCoords: [number, number];
+    isTunnel: boolean;
+    isCanal: boolean;
+}
+
+export async function fetchCommunityMapObjects(url: string): Promise<CommunityMapObject[]> {
+    console.log('Fetching community map objects from:', url);
+    return await invoke('fetch_community_map_objects', { url });
+}
+
+export async function loadCommunityMapObjects(mapId: string): Promise<CommunityMapObject[] | null> {
+    const result = await invoke('load_community_map_objects', { mapId }) as { objects: CommunityMapObject[], fetchedAt: number } | null;
+    return result ? result.objects : null;
+}
+
+export async function saveCommunityMapObjects(mapId: string, objects: CommunityMapObject[]) {
+    await invoke('save_community_map_objects', { mapId, objects });
+}

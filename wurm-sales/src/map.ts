@@ -13,7 +13,7 @@ import Feature from 'ol/Feature';
 import { Point, LineString, Geometry } from 'ol/geom';
 import { Style, Stroke, Fill, Text, Circle as CircleStyle } from 'ol/style';
 import { addUserLayer, toggleUserLayer, getUserLayers, UserLayer, addFeatureToLayer, loadAndRenderUserLayers, setCurrentMapId, removeFeatureFromLayer } from './userLayers';
-import { fetchCommunityDeeds, loadCommunityDeeds, saveCommunityDeeds, fetchCommunityGuardTowers, loadCommunityGuardTowers, saveCommunityGuardTowers, fetchCommunityMissionStructures, loadCommunityMissionStructures, saveCommunityMissionStructures, fetchCommunityBridges, loadCommunityBridges, saveCommunityBridges } from './communityDeeds';
+import { fetchCommunityDeeds, loadCommunityDeeds, saveCommunityDeeds, fetchCommunityGuardTowers, loadCommunityGuardTowers, saveCommunityGuardTowers, fetchCommunityMissionStructures, loadCommunityMissionStructures, saveCommunityMissionStructures, fetchCommunityBridges, loadCommunityBridges, saveCommunityBridges, fetchCommunityMapObjects, loadCommunityMapObjects, saveCommunityMapObjects, CommunityMapObject } from './communityDeeds';
 import { Draw } from 'ol/interaction';
 import { getMapConfig, getAllMaps } from './mapConfigs';
 
@@ -38,7 +38,9 @@ let communityMissionStructuresVisible = true; // Default visible
 communityMissionStructuresVisible = localStorage.getItem('communityMissionStructuresVisible') !== 'false';
 
 let communityBridgesLayer: VectorLayer<VectorSource> | null = null;
+let communityMapObjectsLayer: VectorLayer<VectorSource> | null = null;
 let communityBridgesVisible = true; // Default visible
+let communityMapObjectsVisible = true; // Default visible
 communityBridgesVisible = localStorage.getItem('communityBridgesVisible') !== 'false';
 
 // Zoom level threshold for showing labels (only show labels when zoomed in close)
@@ -237,6 +239,16 @@ function hideCommunityBridgesLoading() {
     if (indicator) indicator.style.display = 'none';
 }
 
+function showCommunityMapObjectsLoading() {
+    const indicator = document.getElementById('community-map-objects-loading');
+    if (indicator) indicator.style.display = 'inline';
+}
+
+function hideCommunityMapObjectsLoading() {
+    const indicator = document.getElementById('community-map-objects-loading');
+    if (indicator) indicator.style.display = 'none';
+}
+
 async function loadCommunityGuardTowersForMap(mapId: string) {
     const mapConfig = getMapConfig(mapId);
     if (!mapConfig || !mapConfig.communityMapUrl) {
@@ -304,6 +316,7 @@ async function loadCommunityGuardTowersForMap(mapId: string) {
                         })
                     });
                 },
+                zIndex: 300, // Above mission structures
                 visible: communityGuardTowersVisible
             });
             map.addLayer(communityGuardTowersLayer);
@@ -392,6 +405,7 @@ async function loadCommunityMissionStructuresForMap(mapId: string) {
                         })
                     });
                 },
+                zIndex: 200, // Above tunnels/canals but below guard towers
                 visible: communityMissionStructuresVisible
             });
             map.addLayer(communityMissionStructuresLayer);
@@ -500,6 +514,113 @@ function toggleCommunityBridges() {
     }
     // Save to localStorage
     localStorage.setItem('communityBridgesVisible', communityBridgesVisible.toString());
+}
+
+function toggleCommunityMapObjects() {
+    communityMapObjectsVisible = !communityMapObjectsVisible;
+    if (communityMapObjectsLayer) {
+        communityMapObjectsLayer.setVisible(communityMapObjectsVisible);
+    }
+    // Save to localStorage
+    localStorage.setItem('communityMapObjectsVisible', communityMapObjectsVisible.toString());
+}
+
+async function loadCommunityMapObjectsForMap(mapId: string) {
+    const mapConfig = getMapConfig(mapId);
+    if (!mapConfig || !mapConfig.communityMapUrl) {
+        console.log('No communityMapUrl for map:', mapId);
+        return;
+    }
+    console.log('Loading community map objects for:', mapId);
+    showCommunityMapObjectsLoading();
+    try {
+        let objects: CommunityMapObject[] | null = await loadCommunityMapObjects(mapId);
+        console.log('Loaded map objects from file:', objects?.length ?? 0);
+        if (!objects) {
+            // Fetch from URL
+            console.log('Fetching map objects from URL');
+            objects = await fetchCommunityMapObjects(mapConfig.communityMapUrl);
+            console.log('Fetched map objects:', objects.length);
+            await saveCommunityMapObjects(mapId, objects);
+        }
+        // Create features
+        const features = objects.map((obj: CommunityMapObject) => {
+            const startX = obj.startCoords[0];
+            const startY = mapConfig.extent[3] - obj.startCoords[1]; // Flip Y
+            const endX = obj.endCoords[0];
+            const endY = mapConfig.extent[3] - obj.endCoords[1]; // Flip Y
+
+            const feature = new Feature({
+                geometry: new LineString([[startX, startY], [endX, endY]]),
+                name: obj.name
+            });
+
+            return feature;
+        });
+
+        console.log('Created map object features:', features.length);
+
+        // Create or update layer
+        if (communityMapObjectsLayer) {
+            communityMapObjectsLayer.getSource()?.clear();
+            communityMapObjectsLayer.getSource()?.addFeatures(features);
+        } else {
+            communityMapObjectsLayer = new VectorLayer({
+                source: new VectorSource({
+                    features: features
+                }),
+                style: (feature) => {
+                    const zoom = map!.getView().getZoom() || 0;
+                    const shouldShowLabels = zoom >= LABEL_ZOOM_THRESHOLD;
+                    const name = feature.get('name') || '';
+                    const text = shouldShowLabels && name ? name : '';
+
+                    // Find the object to get its properties
+                    const obj = objects!.find((o: CommunityMapObject) => o.name === name);
+                    if (!obj) return [];
+
+                    let strokeColor = '#0000FF'; // Default blue for canals
+                    let lineDash: number[] | undefined = undefined;
+
+                    if (obj.isTunnel && obj.isCanal) {
+                        // Both: dashed red and blue (alternating)
+                        strokeColor = '#FF0000'; // Red base
+                        lineDash = [10, 10]; // Dashed pattern
+                    } else if (obj.isTunnel) {
+                        strokeColor = '#FF0000'; // Red for tunnels
+                    } else if (obj.isCanal) {
+                        strokeColor = '#0000FF'; // Blue for canals
+                    }
+
+                    return new Style({
+                        stroke: new Stroke({
+                            color: strokeColor,
+                            width: 6,
+                            lineDash: lineDash
+                        }),
+                        text: new Text({
+                            text: text,
+                            font: '12px Calibri,sans-serif',
+                            fill: new Fill({ color: '#fff' }),
+                            stroke: new Stroke({
+                                color: '#000',
+                                width: 2
+                            }),
+                            offsetY: -15
+                        })
+                    });
+                },
+                zIndex: 50, // Same as bridges layer
+                visible: communityMapObjectsVisible
+            });
+            map.addLayer(communityMapObjectsLayer);
+        }
+        console.log('Added community map objects layer');
+    } catch (e) {
+        console.error('Failed to load community map objects:', e);
+    } finally {
+        hideCommunityMapObjectsLoading();
+    }
 }
 
 /**
@@ -1086,6 +1207,9 @@ function switchMap(newMapId: string) {
 
     // Load community bridges
     loadCommunityBridgesForMap(newMapId);
+
+    // Load community map objects
+    loadCommunityMapObjectsForMap(newMapId);
 }
 
 // Initialize on page load
@@ -1128,6 +1252,9 @@ loadCommunityMissionStructuresForMap(initialMapId);
 // Load community bridges
 loadCommunityBridgesForMap(initialMapId);
 
+// Load community map objects
+loadCommunityMapObjectsForMap(initialMapId);
+
 // Initialize layer manager panel
 initializeLayerManagerPanel();
 
@@ -1164,6 +1291,15 @@ if (communityBridgesToggle) {
     communityBridgesToggle.checked = communityBridgesVisible;
     communityBridgesToggle.addEventListener('change', () => {
         toggleCommunityBridges();
+    });
+}
+
+// Community map objects toggle setup
+const communityMapObjectsToggle = document.getElementById('community-map-objects-toggle') as HTMLInputElement;
+if (communityMapObjectsToggle) {
+    communityMapObjectsToggle.checked = communityMapObjectsVisible;
+    communityMapObjectsToggle.addEventListener('change', () => {
+        toggleCommunityMapObjects();
     });
 }
 
