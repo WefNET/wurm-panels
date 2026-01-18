@@ -1277,6 +1277,9 @@ populateMapSelector();
 // Initialize map selector panel
 initializeMapSelectorPanel();
 
+// Initialize search panel
+initializeSearchPanel();
+
 // Load community deeds
 loadCommunityDeedsForMap(initialMapId);
 
@@ -1294,6 +1297,9 @@ loadCommunityMapObjectsForMap(initialMapId);
 
 // Initialize layer manager panel
 initializeLayerManagerPanel();
+
+// Initialize search panel
+initializeSearchPanel();
 
 // Community deeds toggle setup
 const communityDeedsToggle = document.getElementById('community-deeds-toggle') as HTMLInputElement;
@@ -1422,4 +1428,165 @@ function initializeLayerManagerPanel() {
     // Event listeners
     toggleBtn.addEventListener('click', togglePanel);
     collapseBtn.addEventListener('click', togglePanel);
+}
+function initializeSearchPanel() {
+    const panel = document.getElementById('search-panel') as HTMLElement;
+    const toggleBtn = document.getElementById('search-panel-toggle') as HTMLButtonElement;
+    const collapseBtn = document.getElementById('search-panel-collapse') as HTMLButtonElement;
+    const searchInput = document.getElementById('search-input') as HTMLInputElement;
+    const searchResults = document.getElementById('search-results') as HTMLElement;
+
+    if (!panel || !toggleBtn || !collapseBtn || !searchInput || !searchResults) return;
+
+    // Load saved panel state
+    const savedState = localStorage.getItem('wurmSearchPanelExpanded');
+    const isExpanded = savedState === 'true';
+
+    // Always start collapsed by default
+    panel.classList.add('collapsed');
+    localStorage.setItem('wurmSearchPanelExpanded', 'false');
+
+    if (isExpanded) {
+        panel.classList.remove('collapsed');
+    }
+
+    // Toggle panel visibility
+    function togglePanel(event: Event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const isCollapsed = panel.classList.contains('collapsed');
+        if (isCollapsed) {
+            panel.classList.remove('collapsed');
+            localStorage.setItem('wurmSearchPanelExpanded', 'true');
+        } else {
+            panel.classList.add('collapsed');
+            localStorage.setItem('wurmSearchPanelExpanded', 'false');
+        }
+    }
+
+    // Search functionality
+    function performSearch(query: string) {
+        searchResults.innerHTML = '';
+
+        if (!query.trim()) return;
+
+        const results: Array<{name: string, type: string, coords: [number, number], layer: string}> = [];
+
+        // Search community deeds
+        if (communityDeedsLayer && communityDeedsLayer.getVisible()) {
+            const source = communityDeedsLayer.getSource();
+            if (source) {
+                source.getFeatures().forEach(feature => {
+                    const name = feature.get('name') as string;
+                    if (name && name.toLowerCase().includes(query.toLowerCase())) {
+                        const geometry = feature.getGeometry();
+                        if (geometry instanceof Point) {
+                            const coords = geometry.getCoordinates();
+                            results.push({
+                                name,
+                                type: 'Community Deed',
+                                coords: [coords[0], coords[1]],
+                                layer: 'deeds'
+                            });
+                        }
+                    }
+                });
+            }
+        }
+
+        // Search community guard towers
+        if (communityGuardTowersLayer && communityGuardTowersLayer.getVisible()) {
+            const source = communityGuardTowersLayer.getSource();
+            if (source) {
+                source.getFeatures().forEach(feature => {
+                    const name = feature.get('name') as string;
+                    if (name && name.toLowerCase().includes(query.toLowerCase())) {
+                        const geometry = feature.getGeometry();
+                        if (geometry instanceof Point) {
+                            const coords = geometry.getCoordinates();
+                            results.push({
+                                name,
+                                type: 'Community Guard Tower',
+                                coords: [coords[0], coords[1]],
+                                layer: 'guard_towers'
+                            });
+                        }
+                    }
+                });
+            }
+        }
+
+        // Search community mission structures
+        if (communityMissionStructuresLayer && communityMissionStructuresLayer.getVisible()) {
+            const source = communityMissionStructuresLayer.getSource();
+            if (source) {
+                source.getFeatures().forEach(feature => {
+                    const name = feature.get('name') as string;
+                    if (name && name.toLowerCase().includes(query.toLowerCase())) {
+                        const geometry = feature.getGeometry();
+                        if (geometry instanceof Point) {
+                            const coords = geometry.getCoordinates();
+                            results.push({
+                                name,
+                                type: 'Community Mission Structure',
+                                coords: [coords[0], coords[1]],
+                                layer: 'mission_structures'
+                            });
+                        }
+                    }
+                });
+            }
+        }
+
+        // Display results
+        if (results.length === 0) {
+            searchResults.innerHTML = '<p style="color: rgba(255,255,255,0.6); text-align: center; padding: 20px;">No results found</p>';
+            return;
+        }
+
+        results.forEach(result => {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'search-result-item';
+            resultDiv.innerHTML = `
+                <h4>${result.name}</h4>
+                <p>${result.type}</p>
+            `;
+
+            resultDiv.addEventListener('click', () => {
+                // Zoom to the location
+                if (map) {
+                    const view = map.getView();
+                    view.setCenter(result.coords);
+                    view.setZoom(6); // Zoom in close enough to see details
+                }
+
+                // Close search panel on mobile/small screens
+                if (window.innerWidth < 1200) {
+                    panel.classList.add('collapsed');
+                    localStorage.setItem('wurmSearchPanelExpanded', 'false');
+                }
+            });
+
+            searchResults.appendChild(resultDiv);
+        });
+    }
+
+    // Event listeners
+    if (!toggleBtn.hasAttribute('data-listener-attached')) {
+        toggleBtn.addEventListener('click', togglePanel);
+        toggleBtn.setAttribute('data-listener-attached', 'true');
+    }
+    
+    if (!collapseBtn.hasAttribute('data-listener-attached')) {
+        collapseBtn.addEventListener('click', togglePanel);
+        collapseBtn.setAttribute('data-listener-attached', 'true');
+    }
+
+    // Search input listener with debounce
+    let searchTimeout: ReturnType<typeof setTimeout>;
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        const query = (e.target as HTMLInputElement).value;
+        searchTimeout = setTimeout(() => performSearch(query), 300);
+    });
 }

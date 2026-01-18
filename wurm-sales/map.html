@@ -311,6 +311,171 @@
             display: none;
         }
 
+        /* Search Panel Styles */
+        .search-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 320px;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border-left: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+            transition: right 0.3s ease-in-out;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-panel.collapsed {
+            right: -320px;
+        }
+
+        .search-panel .panel-header {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .search-panel .panel-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            display: none; /* Hidden since we have a separate toggle button */
+        }
+
+        /* Separate search panel toggle button */
+        .search-panel-toggle {
+            position: fixed;
+            left: 0;
+            top: 190px; /* Under the layer manager toggle at 140px */
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-left: none;
+            border-radius: 0 4px 4px 0;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px;
+            z-index: 990; /* Above the panel */
+            transition: background-color 0.2s;
+        }
+
+        .search-panel-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .search-panel .panel-collapse {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            margin-left: auto;
+        }
+
+        .search-panel .panel-collapse:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .search-panel .panel-title {
+            color: white;
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .search-panel .panel-content {
+            padding: 15px;
+            overflow-y: auto;
+            height: calc(100% - 60px);
+        }
+
+        .search-input-group {
+            margin-bottom: 15px;
+        }
+
+        .search-input-group label {
+            display: block;
+            color: white;
+            font-size: 14px;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .search-input-group input {
+            width: 100%;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: white;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .search-input-group input:focus {
+            outline: none;
+            border-color: #4a9eff;
+            box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+        }
+
+        .search-input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .search-results {
+            margin-top: 15px;
+        }
+
+        .search-result-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .search-result-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .search-result-item h4 {
+            margin: 0 0 5px 0;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .search-result-item p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 12px;
+        }
+
+        /* Expand button when collapsed */
+        .search-panel.collapsed .panel-toggle {
+            /* Positioning is now always applied with fixed positioning */
+        }
+
+        .search-panel.collapsed .panel-title,
+        .search-panel.collapsed .panel-collapse {
+            display: none;
+        }
+
         /* Feature Info Box Styles */
         #feature-info {
             position: absolute;
@@ -447,6 +612,30 @@
                 <h3>Drawing</h3>
                 <button id="draw-point-btn">Add Point</button>
                 <p>Select a layer and click "Add Point", then click on the map.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Panel Toggle Button -->
+    <button id="search-panel-toggle" class="search-panel-toggle" title="Toggle Search Panel">
+        <span class="toggle-icon">🔍</span>
+    </button>
+
+    <!-- Search Panel -->
+    <div id="search-panel" class="search-panel collapsed">
+        <div class="panel-header">
+            <h3 class="panel-title">Search</h3>
+            <button id="search-panel-collapse" class="panel-collapse" title="Collapse Panel">
+                <span class="collapse-icon">▶</span>
+            </button>
+        </div>
+        <div class="panel-content">
+            <div class="search-input-group">
+                <label for="search-input">Search locations:</label>
+                <input type="text" id="search-input" placeholder="Enter location name..." />
+            </div>
+            <div id="search-results" class="search-results">
+                <!-- Search results will be populated here -->
             </div>
         </div>
     </div>
