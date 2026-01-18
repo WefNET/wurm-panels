@@ -117,6 +117,198 @@ export const MAPS: Record<string, MapConfig> = {
         ],
         communityMapUrl: "https://independence.yaga.host"
     },
+    release: {
+        id: 'release',
+        name: 'Release',
+        extent: [0, 0, 2048, 2048], // Example: smaller map
+        resolutions: [8, 4, 2, 1, 0.5, 0.25], // 6 zoom levels with virtual zooming
+        tileLayers: [
+            {
+                id: 'terrain-2025',
+                name: 'Terrain (2025)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2025-02/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2025
+            },
+            {
+                id: 'topographical-2025',
+                name: 'Topographical (2025)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2025-02/topographical/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "topological",
+                year: 2025
+            },
+            {
+                id: 'terrain-2024',
+                name: 'Terrain (2024)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2024-02/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2024
+            },
+            {
+                id: 'topographical-2024',
+                name: 'Topographical (2024)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2024-02/topographical/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "topological",
+                year: 2024
+            },
+            {
+                id: 'terrain-2023',
+                name: 'Terrain (2023)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2023-01/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2023
+            },
+            {
+                id: 'topographical-2023',
+                name: 'Topographical (2023)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2023-01/topographical/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "topological",
+                year: 2023
+            },
+            {
+                id: 'terrain-2022',
+                name: 'Terrain (2022)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2022-02/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2022
+            },
+            {
+                id: 'topographical-2022',
+                name: 'Topographical (2022)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2022-02/topographical/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "topological",
+                year: 2022
+            },
+            {
+                id: 'terrain-2021',
+                name: 'Terrain (2021)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2021-01/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2021
+            },
+            {
+                id: 'topographical-2021',
+                name: 'Topographical (2021)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2021-01/topographical/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "topological",
+                year: 2021
+            },
+            {
+                id: 'terrain-2020',
+                name: 'Terrain (2020)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2020-02/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2020
+            },
+            {
+                id: 'topographical-2020',
+                name: 'Topographical (2020)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2020-02/topographical/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "topological",
+                year: 2020
+            },
+            {
+                id: 'terrain-2019',
+                name: 'Terrain (2019)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2019-01/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2019
+            },
+            {
+                id: 'topographical-2019',
+                name: 'Topographical (2019)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2019-01/topographical/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "topological",
+                year: 2019
+            },
+            {
+                id: 'terrain-2018',
+                name: 'Terrain (2018)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2017-12/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2018
+            },
+            {
+                id: 'topographical-2018',
+                name: 'Topographical (2018)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2017-12/topographical/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "topological",
+                year: 2018
+            },
+            {
+                id: 'terrain-2017',
+                name: 'Terrain (2017)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2016-11/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2017
+            },
+            {
+                id: 'topographical-2017',
+                name: 'Topographical (2017)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2016-11/topographical/{z}/{x}/{y}.png',
+                zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "topological",
+                year: 2017
+            }
+        ],
+        startingLocations: [
+            // Add starting locations for Release
+        ],
+        communityMapUrl: "https://release.yaga.host"
+    },
     xanadu: {
         id: 'xanadu',
         name: 'Xanadu',
