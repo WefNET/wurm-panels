@@ -13,7 +13,7 @@ import Feature from 'ol/Feature';
 import { Point, LineString, Geometry } from 'ol/geom';
 import { Style, Stroke, Fill, Text, Circle as CircleStyle } from 'ol/style';
 import { addUserLayer, toggleUserLayer, getUserLayers, UserLayer, addFeatureToLayer, loadAndRenderUserLayers, setCurrentMapId, removeFeatureFromLayer } from './userLayers';
-import { fetchCommunityDeeds, loadCommunityDeeds, saveCommunityDeeds, fetchCommunityGuardTowers, loadCommunityGuardTowers, saveCommunityGuardTowers, fetchCommunityMissionStructures, loadCommunityMissionStructures, saveCommunityMissionStructures, fetchCommunityBridges, loadCommunityBridges, saveCommunityBridges, fetchCommunityMapObjects, loadCommunityMapObjects, saveCommunityMapObjects, CommunityMapObject } from './communityDeeds';
+import { fetchCommunityDeeds, loadCommunityDeeds, saveCommunityDeeds, fetchCommunityGuardTowers, loadCommunityGuardTowers, saveCommunityGuardTowers, fetchCommunityMissionStructures, loadCommunityMissionStructures, saveCommunityMissionStructures, fetchCommunityBridges, loadCommunityBridges, saveCommunityBridges, fetchCommunityMapObjects, loadCommunityMapObjects, saveCommunityMapObjects, CommunityTunnelObject } from './communityDeeds';
 import { Draw } from 'ol/interaction';
 import { getMapConfig, getAllMaps } from './mapConfigs';
 
@@ -240,12 +240,12 @@ function hideCommunityBridgesLoading() {
 }
 
 function showCommunityMapObjectsLoading() {
-    const indicator = document.getElementById('community-map-objects-loading');
+    const indicator = document.getElementById('community-tunnels-loading');
     if (indicator) indicator.style.display = 'inline';
 }
 
 function hideCommunityMapObjectsLoading() {
-    const indicator = document.getElementById('community-map-objects-loading');
+    const indicator = document.getElementById('community-tunnels-loading');
     if (indicator) indicator.style.display = 'none';
 }
 
@@ -534,7 +534,7 @@ async function loadCommunityMapObjectsForMap(mapId: string) {
     console.log('Loading community map objects for:', mapId);
     showCommunityMapObjectsLoading();
     try {
-        let objects: CommunityMapObject[] | null = await loadCommunityMapObjects(mapId);
+        let objects: CommunityTunnelObject[] | null = await loadCommunityMapObjects(mapId);
         console.log('Loaded map objects from file:', objects?.length ?? 0);
         if (!objects) {
             // Fetch from URL
@@ -544,7 +544,7 @@ async function loadCommunityMapObjectsForMap(mapId: string) {
             await saveCommunityMapObjects(mapId, objects);
         }
         // Create features
-        const features = objects.map((obj: CommunityMapObject) => {
+        const features = objects.map((obj: CommunityTunnelObject) => {
             const startX = obj.startCoords[0];
             const startY = mapConfig.extent[3] - obj.startCoords[1]; // Flip Y
             const endX = obj.endCoords[0];
@@ -576,20 +576,46 @@ async function loadCommunityMapObjectsForMap(mapId: string) {
                     const text = shouldShowLabels && name ? name : '';
 
                     // Find the object to get its properties
-                    const obj = objects!.find((o: CommunityMapObject) => o.name === name);
+                    const obj = objects!.find((o: CommunityTunnelObject) => o.name === name);
                     if (!obj) return [];
 
-                    let strokeColor = '#0000FF'; // Default blue for canals
+                    let strokeColor = 'rgba(0, 0, 255, 0.7)'; // Default blue for canals with opacity
                     let lineDash: number[] | undefined = undefined;
 
-                    if (obj.isTunnel && obj.isCanal) {
-                        // Both: dashed red and blue (alternating)
-                        strokeColor = '#FF0000'; // Red base
-                        lineDash = [10, 10]; // Dashed pattern
-                    } else if (obj.isTunnel) {
-                        strokeColor = '#FF0000'; // Red for tunnels
+                    if (obj.isCanal && obj.isTunnel) {
+                        // Both: create two overlapping strokes for red-blue effect
+                        return [
+                            new Style({
+                                stroke: new Stroke({
+                                    color: 'rgba(255, 0, 0, 0.7)', // Red
+                                    width: 6,
+                                    lineDash: [15, 15], // Longer dashes
+                                    lineDashOffset: 0
+                                }),
+                                text: new Text({
+                                    text: text,
+                                    font: '12px Calibri,sans-serif',
+                                    fill: new Fill({ color: '#fff' }),
+                                    stroke: new Stroke({
+                                        color: '#000',
+                                        width: 2
+                                    }),
+                                    offsetY: -15
+                                })
+                            }),
+                            new Style({
+                                stroke: new Stroke({
+                                    color: 'rgba(0, 0, 255, 0.7)', // Blue
+                                    width: 4, // Slightly thinner
+                                    lineDash: [15, 15], // Same pattern
+                                    lineDashOffset: 15 // Offset to create alternating effect
+                                })
+                            })
+                        ];
                     } else if (obj.isCanal) {
-                        strokeColor = '#0000FF'; // Blue for canals
+                        strokeColor = 'rgba(255, 0, 0, 0.7)'; // Red for tunnels with opacity
+                    } else if (obj.isTunnel) {
+                        strokeColor = 'rgba(0, 0, 255, 0.7)'; // Blue for canals with opacity
                     }
 
                     return new Style({
@@ -1294,11 +1320,11 @@ if (communityBridgesToggle) {
     });
 }
 
-// Community map objects toggle setup
-const communityMapObjectsToggle = document.getElementById('community-map-objects-toggle') as HTMLInputElement;
-if (communityMapObjectsToggle) {
-    communityMapObjectsToggle.checked = communityMapObjectsVisible;
-    communityMapObjectsToggle.addEventListener('change', () => {
+// Community tunnels toggle setup
+const communityTunnelsToggle = document.getElementById('community-tunnels-toggle') as HTMLInputElement;
+if (communityTunnelsToggle) {
+    communityTunnelsToggle.checked = communityMapObjectsVisible;
+    communityTunnelsToggle.addEventListener('change', () => {
         toggleCommunityMapObjects();
     });
 }
