@@ -42,6 +42,10 @@ Spits out all changes in files from your chosen "logs" folder.
 
 > Plan to have every terrain and topographical map available since 2016!!
 
+- High permformant OpenLayers design with XYZ tiles stored in Cloudflare CDN.
+- Low memory requirements, about 200mb of RAM needed.
+- Persistant views with recall of the map selected, position and zoom level.
+
 <img width="812" height="646" alt="image" src="https://github.com/user-attachments/assets/83212baa-293d-4713-a6e1-31f7af506eb2" />
 
 ### Features
