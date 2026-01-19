@@ -37,6 +37,7 @@ use image::GenericImageView;
 use trade_entries::{new_store as new_trade_store, SharedTradeEntries, TradeEntry};
 use url::Url;
 use watcher::DirectoryWatcher;
+use tokio::time::sleep;
 
 #[derive(Deserialize)]
 struct UpdateSettingsPayload {
@@ -658,6 +659,15 @@ fn main() {
                     }
                 })
                 .build(app)?;
+
+            // Close splash screen after tray is ready
+            if let Some(splash_window) = app.get_webview_window("splashscreen") {
+                let splash = splash_window.clone();
+                async_runtime::spawn(async move {
+                    sleep(std::time::Duration::from_secs(5)).await;
+                    let _ = splash.close();
+                });
+            }
 
             DirectoryWatcher::new(
                 app.handle().clone(),

@@ -11,7 +11,21 @@
   },
   "app": {
     "withGlobalTauri": true,
-    "windows": [],
+    "windows": [
+      {
+        "label": "splashscreen",
+        "url": "splashscreen.html",
+        "width": 400,
+        "height": 300,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "center": true,
+        "skipTaskbar": true,
+        "closable": false,
+        "resizable": false,
+        "transparent": true
+      }
+    ],
     "security": {
       "csp": null
     }
@@ -37,7 +51,8 @@
       "../settings.html",
       "../skills.html",
       "../trade.html",
-      "../watcher.html"
+      "../watcher.html",
+      "../splashscreen.html"
     ],
     "icon": [
       "icons/wurm-panels.ico"
