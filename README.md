@@ -1,5 +1,7 @@
 # Wurm Panels
 
+<img width="256" height="256" alt="wurm-panels-logo" src="https://github.com/user-attachments/assets/d732b030-52c5-4144-a407-b71304222a92" />
+
 By Jackjones, Xanadu
 
 > This is an early beta. Many things do not work correctly.
@@ -17,6 +19,8 @@ Installing and running this app gives you a System Tray app that gives you panel
 - Settings
 
 To get the logging working across multiple panels: open the settings screen and select your character "logs" directory.
+
+<img width="255" height="265" alt="image" src="https://github.com/user-attachments/assets/6f592677-6e29-4d5f-9644-cd2fadd04b71" />
 
 ## Skills Tracker (90% done)
 
