@@ -38,7 +38,7 @@ Spits out all changes in files from your chosen "logs" folder.
 
 <img width="394" height="554" alt="image" src="https://github.com/user-attachments/assets/a1b72def-08bb-4930-aa98-abcf6ed7740f" />
 
-## Maps
+## Maps (75% done with code 10% done with converting map dumps)
 
 > Plan to have every terrain and topographical map available since 2016!!
 
