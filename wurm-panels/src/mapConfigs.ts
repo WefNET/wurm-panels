@@ -35,6 +35,77 @@ export interface MapConfig {
  * All available maps in the application.
  */
 export const MAPS: Record<string, MapConfig> = {
+    cadence: {
+        id: 'cadence',
+        name: 'Cadence',
+        extent: [0, 0, 4096, 4096],
+        resolutions: [16, 8, 4, 2, 1, 0.5, 0.25], // 7 zoom levels with virtual zooming
+        tileLayers: [
+            {
+                id: 'terrain',
+                name: 'Terrain (2025)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2025-02/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 5, // Max zoom level 4 for real tiles, higher levels scale z=4
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2025
+            },
+            {
+                id: 'topological',
+                name: 'Topological (2025)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2025-02/topographical/{z}/{x}/{y}.png',
+                zoomLevels: 5, // Max zoom level 4 for real tiles, higher levels scale z=4
+                enabled: true,
+                opacity: 1.0,
+                mapType: "topological",
+                year: 2025
+            },
+            {
+                id: 'terrain',
+                name: 'Terrain (2024)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2024-02/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 5, // Max zoom level 4 for real tiles, higher levels scale z=4
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2024
+            },
+            {
+                id: 'topological',
+                name: 'Topological (2024)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2024-02/topographical/{z}/{x}/{y}.png',
+                zoomLevels: 5, // Max zoom level 4 for real tiles, higher levels scale z=4
+                enabled: true,
+                opacity: 1.0,
+                mapType: "topological",
+                year: 2024
+            },
+            {
+                id: 'terrain',
+                name: 'Terrain (2023)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2023-02/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 5, // Max zoom level 4 for real tiles, higher levels scale z=4
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2023
+            },
+            {
+                id: 'topological',
+                name: 'Topological (2023)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2023-02/topographical/{z}/{x}/{y}.png',
+                zoomLevels: 5, // Max zoom level 4 for real tiles, higher levels scale z=4
+                enabled: true,
+                opacity: 1.0,
+                mapType: "topological",
+                year: 2023            }
+        ],
+        startingLocations: [
+            // Add starting locations for Independence
+        ],
+        communityMapUrl: "https://cadence.yaga.host"
+    },
     celebration: {
         id: 'celebration',
         name: 'Celebration',
@@ -43,7 +114,7 @@ export const MAPS: Record<string, MapConfig> = {
         tileLayers: [
             {
                 id: 'terrain',
-                name: 'Terrain',
+                name: 'Terrain (2025)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2025/terrain/{z}/{x}/{y}.png',
                 zoomLevels: 4, // Max zoom level 3 for real tiles, higher levels scale z=3
                 enabled: true,
