@@ -99,7 +99,8 @@ export const MAPS: Record<string, MapConfig> = {
                 enabled: true,
                 opacity: 1.0,
                 mapType: "topological",
-                year: 2023            }
+                year: 2023
+            }
         ],
         startingLocations: [
             // Add starting locations for Independence
@@ -165,6 +166,39 @@ export const MAPS: Record<string, MapConfig> = {
         ],
         startingLocations: [],
         communityMapUrl: "https://deliverance.yaga.host"
+    },
+    harmony: {
+        id: 'harmony',
+        name: 'Harmony',
+        extent: [0, 0, 4096, 4096], // Example: smaller map
+        resolutions: [16, 8, 4, 2, 1, 0.5, 0.25], // 7 zoom levels with virtual zooming
+        tileLayers: [
+            {
+                id: 'terrain',
+                name: 'Terrain (2025)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/harmony/2025-02/terrain/{z}/{x}/{y}.png',
+                zoomLevels: 5, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "terrain",
+                year: 2025
+            },
+            {
+                id: 'topological',
+                name: 'Topological (2025)',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/harmony/2025-02/topographical/{z}/{x}/{y}.png',
+                zoomLevels: 5, // Max zoom level 3 for real tiles, higher levels scale z=3
+                enabled: true,
+                opacity: 1.0,
+                mapType: "topological",
+                year: 2025
+            }
+        ],
+        startingLocations: [
+            { name: 'Harmony Bay', coords: [2345,2478] },
+            { name: 'Heartland', coords: [1560,1279] },
+        ],
+        communityMapUrl: "https://harmony.yaga.host"
     },
     independence: {
         id: 'independence',
