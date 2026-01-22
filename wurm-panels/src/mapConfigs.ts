@@ -1,12 +1,7 @@
 /**
  * Configuration for tile layers within a map.
- * Note: `enabled` and `opacity` were removed — layers are always visible and fully opaque by default.
- * The `zoomLevels` property has been moved to the parent `MapConfig` because it is common to all layers
- * for a given map.
  */
 export interface TileLayerConfig {
-    id: string;
-    name: string;
     urlTemplate: string; // e.g., "https://.../{z}/{x}/{y}.png"
     mapType: 'terrain' | 'topological';
     year: number;
@@ -41,43 +36,31 @@ export const MAPS: Record<string, MapConfig> = {
         resolutions: [16, 8, 4, 2, 1, 0.5, 0.25], // 7 zoom levels with virtual zooming
         tileLayers: [
             {
-                id: 'terrain',
-                name: 'Terrain (2025)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2025-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2025
             },
             {
-                id: 'topological',
-                name: 'Topological (2025)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2025-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2025
             },
             {
-                id: 'terrain',
-                name: 'Terrain (2024)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2024-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2024
             },
             {
-                id: 'topological',
-                name: 'Topological (2024)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2024-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2024
             },
             {
-                id: 'terrain',
-                name: 'Terrain (2023)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2023-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2023
             },
             {
-                id: 'topological',
-                name: 'Topological (2023)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2023-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2023
@@ -96,8 +79,6 @@ export const MAPS: Record<string, MapConfig> = {
         resolutions: [8, 4, 2, 1, 0.5, 0.25], // 6 zoom levels with virtual zooming
         tileLayers: [
             {
-                id: 'terrain',
-                name: 'Terrain (2025)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2025/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2025
@@ -114,15 +95,11 @@ export const MAPS: Record<string, MapConfig> = {
         resolutions: [8, 4, 2, 1, 0.5, 0.25], // 6 zoom levels with virtual zooming
         tileLayers: [
             {
-                id: 'terrain-2025',
-                name: 'Terrain (2025)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/deliverance/2025/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2025
             },
             {
-                id: 'topological-2025',
-                name: 'Topological (2025)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/deliverance/2025/topo/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2025
@@ -139,15 +116,11 @@ export const MAPS: Record<string, MapConfig> = {
         resolutions: [16, 8, 4, 2, 1, 0.5, 0.25], // 7 zoom levels with virtual zooming
         tileLayers: [
             {
-                id: 'terrain',
-                name: 'Terrain (2025)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/harmony/2025-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2025
             },
             {
-                id: 'topological',
-                name: 'Topological (2025)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/harmony/2025-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2025
@@ -167,8 +140,6 @@ export const MAPS: Record<string, MapConfig> = {
         resolutions: [16, 8, 4, 2, 1, 0.5, 0.25], // 7 zoom levels with virtual zooming
         tileLayers: [
             {
-                id: 'terrain',
-                name: 'Terrain',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/independence/2025/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2025
@@ -187,144 +158,108 @@ export const MAPS: Record<string, MapConfig> = {
         resolutions: [8, 4, 2, 1, 0.5, 0.25], // 6 zoom levels with virtual zooming
         tileLayers: [
             {
-                id: 'terrain-2025',
-                name: 'Terrain (2025)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2025-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2025
             },
 
             {
-                id: 'topographical-2025',
-                name: 'Topographical (2025)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2025-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2025
             },
 
             {
-                id: 'terrain-2024',
-                name: 'Terrain (2024)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2024-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2024
             },
 
             {
-                id: 'topographical-2024',
-                name: 'Topographical (2024)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2024-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2024
             },
 
             {
-                id: 'terrain-2023',
-                name: 'Terrain (2023)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2023-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2023
             },
 
             {
-                id: 'topographical-2023',
-                name: 'Topographical (2023)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2023-01/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2023
             },
 
             {
-                id: 'terrain-2022',
-                name: 'Terrain (2022)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2022-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2022
             },
 
             {
-                id: 'topographical-2022',
-                name: 'Topographical (2022)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2022-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2022
             },
 
             {
-                id: 'terrain-2021',
-                name: 'Terrain (2021)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2021-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2021
             },
 
             {
-                id: 'topographical-2021',
-                name: 'Topographical (2021)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2021-01/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2021
             },
 
             {
-                id: 'terrain-2020',
-                name: 'Terrain (2020)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2020-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2020
             },
 
             {
-                id: 'topographical-2020',
-                name: 'Topographical (2020)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2020-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2020
             },
 
             {
-                id: 'terrain-2019',
-                name: 'Terrain (2019)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2019-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2019
             },
 
             {
-                id: 'topographical-2019',
-                name: 'Topographical (2019)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2019-01/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2019
             },
 
             {
-                id: 'terrain-2018',
-                name: 'Terrain (2018)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2017-12/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2018
             },
 
             {
-                id: 'topographical-2018',
-                name: 'Topographical (2018)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2017-12/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2018
             },
 
             {
-                id: 'terrain-2017',
-                name: 'Terrain (2017)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2016-11/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2017
             },
 
             {
-                id: 'topographical-2017',
-                name: 'Topographical (2017)',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2016-11/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2017
@@ -343,43 +278,31 @@ export const MAPS: Record<string, MapConfig> = {
         zoomLevels: 6,
         tileLayers: [
             {
-                id: 'terrain',
-                name: 'Terrain',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2025/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2025
             },
             {
-                id: 'topological',
-                name: 'Topological',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2025-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2025
             },
             {
-                id: 'terrain',
-                name: 'Terrain',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2024-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2024
             },
             {
-                id: 'topological',
-                name: 'Topological',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2024-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2024
             },
             {
-                id: 'terrain',
-                name: 'Terrain',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2023-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2023
             },
             {
-                id: 'topological',
-                name: 'Topological',
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2023-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2023
