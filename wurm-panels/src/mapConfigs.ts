@@ -349,6 +349,41 @@ export const MAPS: Record<string, MapConfig> = {
                 mapType: "terrain",
                 year: 2025
             },
+            {
+                id: 'topological',
+                name: 'Topological',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2025-02/topographical/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2025
+            },
+            {
+                id: 'terrain',
+                name: 'Terrain',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2024-02/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2024
+            },
+            {
+                id: 'topological',
+                name: 'Topological',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2024-02/topographical/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2024
+            },
+            {
+                id: 'terrain',
+                name: 'Terrain',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2023-02/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2023
+            },
+            {
+                id: 'topological',
+                name: 'Topological',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2023-02/topographical/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2023
+            },
         ],
         startingLocations: [
             { name: 'Summerholt', coords: [6602, 2252] },
