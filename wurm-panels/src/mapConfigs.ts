@@ -307,6 +307,56 @@ export const MAPS: Record<string, MapConfig> = {
                 mapType: "topological",
                 year: 2023
             },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2022-01/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2022
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2022-01/topographical/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2022
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2021-01/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2021
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2021-01/topographical/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2021
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2020-01/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2020
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2020-01/topographical/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2020
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2018-12/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2019
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2018-12/topographical/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2019
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2016-11/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2017
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2016-11/topographical/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2017
+            },
         ],
         startingLocations: [
             { name: 'Summerholt', coords: [6602, 2252] },
