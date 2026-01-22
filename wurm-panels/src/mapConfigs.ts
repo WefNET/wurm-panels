@@ -150,6 +150,69 @@ export const MAPS: Record<string, MapConfig> = {
         ],
         communityMapUrl: "https://independence.yaga.host"
     },
+    melody: {
+        id: 'melody',
+        name: 'Melody',
+        zoomLevels: 4,
+        extent: [0, 0, 2048, 2048], // Example: smaller map
+        resolutions: [8, 4, 2, 1, 0.5, 0.25], // 6 zoom levels with virtual zooming
+        tileLayers: [
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2025-02/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2025
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2025-02/topographical/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2025
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2024-02/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2024
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2024-02/topographical/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2024
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2023-02/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2023
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2023-02/topographical/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2023
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2022-01/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2022
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2022-01/topographical/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2022
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2020-01/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2020
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2020-01/topographical/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2020
+            }
+        ],
+        startingLocations: [
+            // Add starting locations for Independence
+        ],
+        communityMapUrl: "https://melody.yaga.host"
+    },
     release: {
         id: 'release',
         name: 'Release',
@@ -162,13 +225,11 @@ export const MAPS: Record<string, MapConfig> = {
                 mapType: "terrain",
                 year: 2025
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2025-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2025
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2024-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
