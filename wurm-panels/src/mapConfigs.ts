@@ -209,7 +209,7 @@ export const MAPS: Record<string, MapConfig> = {
             }
         ],
         startingLocations: [
-            // Add starting locations for Independence
+            { name: 'Overture', coords: [901, 1214] },
         ],
         communityMapUrl: "https://melody.yaga.host"
     },
@@ -235,91 +235,76 @@ export const MAPS: Record<string, MapConfig> = {
                 mapType: "terrain",
                 year: 2024
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2024-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2024
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2023-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2023
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2023-01/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2023
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2022-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2022
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2022-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2022
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2021-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2021
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2021-01/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2021
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2020-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2020
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2020-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2020
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2019-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2019
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2019-01/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2019
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2017-12/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2018
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2017-12/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
                 year: 2018
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2016-11/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2017
             },
-
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2016-11/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
@@ -327,7 +312,7 @@ export const MAPS: Record<string, MapConfig> = {
             }
         ],
         startingLocations: [
-            // Add starting locations for Release
+            { name: 'Sloping Sands', coords: [750, 495] },
         ],
         communityMapUrl: "https://release.yaga.host"
     },
