@@ -1149,33 +1149,51 @@ function populateMapSelector() {
     });
 
     function switchToSelectedMap() {
-        const map = maps.find(m => m.name === selectedIsland);
-        const tileLayer = getTileLayer(map, selectedYear, selectedType);
-        if (map && tileLayer) {
+        const mapConfig = maps.find(m => m.name === selectedIsland);
+        const tileLayer = getTileLayer(mapConfig, selectedYear, selectedType);
+        if (mapConfig && tileLayer) {
             // If the map is not already loaded, switch
-            if (map.id !== currentMapId) {
-                switchMap(map.id);
+            if (mapConfig.id !== currentMapId) {
+                switchMap(mapConfig.id);
             } else {
                 // If the map is already loaded, just switch tile layer
                 if (currentTileLayer && tileLayer) {
                     const source = currentTileLayer.getSource() as XYZ;
                     if (source) {
-                        // Update the tile URL function to use the new tile layer
-                        source.setTileUrlFunction((tileCoord) => {
-                            if (!tileCoord) return undefined;
+                        // Replace the tile source to ensure URLs and caches reflect the new tile layer
+                        try {
+                            const oldSource = currentTileLayer.getSource() as any;
 
-                            const z = tileCoord[0];
-                            const x = tileCoord[1];
-                            const y = tileCoord[2];
+                            const tileUrlFunction = (tileCoord: any) => {
+                                if (!tileCoord) return undefined;
+                                const z = tileCoord[0];
+                                const x = tileCoord[1];
+                                const y = tileCoord[2];
+                                return tileLayer.urlTemplate
+                                    .replace('{z}', z.toString())
+                                    .replace('{x}', x.toString())
+                                    .replace('{y}', y.toString());
+                            };
 
-                            const url = tileLayer.urlTemplate
-                                .replace('{z}', z.toString())
-                                .replace('{x}', x.toString())
-                                .replace('{y}', y.toString());
-                            return url;
-                        });
-                        // Clear the tile cache to force reload of tiles
-                        source.refresh();
+                            // Create a fresh XYZ source using existing projection/tileGrid when available
+                            const newSource = new XYZ({
+                                projection: typeof oldSource.getProjection === 'function' ? oldSource.getProjection() : undefined,
+                                tileGrid: oldSource.tileGrid || undefined,
+                                tileUrlFunction,
+                                crossOrigin: 'anonymous',
+                                tileSize: 256
+                            });
+
+                            currentTileLayer.setSource(newSource);
+
+                            // Ensure the layer is re-rendered immediately
+                            currentTileLayer.changed();
+                            if (typeof map !== 'undefined' && typeof (map as any).renderSync === 'function') {
+                                (map as any).renderSync();
+                            }
+                        } catch (err) {
+                            console.warn('Failed to replace tile source and force redraw:', err);
+                        }
                     }
                 }
 
