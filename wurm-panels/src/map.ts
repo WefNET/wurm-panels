@@ -1106,13 +1106,27 @@ function populateMapSelector() {
     function updateTypeSelect() {
         const availableTypes = getTypesForIslandYear(selectedIsland, selectedYear);
         typeSelect.innerHTML = '';
+
+        // Remember current selection so we can try to preserve it when options change
+        const prevSelectedType = selectedType;
+
         availableTypes.forEach((type: string) => {
             const option = document.createElement('option');
             option.value = type;
             option.textContent = type.charAt(0).toUpperCase() + type.slice(1);
             typeSelect.appendChild(option);
         });
-        // Don't override selectedType here, just populate the dropdown
+
+        // If the previously selected type is still available for the new year, keep it.
+        if (prevSelectedType && availableTypes.includes(prevSelectedType)) {
+            typeSelect.value = prevSelectedType;
+        } else {
+            // Otherwise default to the first available type (if any)
+            typeSelect.value = availableTypes[0] || '';
+        }
+
+        // Update the global selectedType to reflect the select's current value
+        selectedType = (typeSelect.value as "terrain" | "topological");
     }
 
     // Initial population
