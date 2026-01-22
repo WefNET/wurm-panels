@@ -676,12 +676,13 @@ function initializeMap(mapId: string) {
         extent: extent,
         origin: [0, extent[3]], // Top-left origin (dynamic based on extent)
         tileSize: 256,
-        resolutions: resolutions.slice(0, mapConfig.tileLayers[0].zoomLevels)
+        resolutions: resolutions.slice(0, mapConfig.zoomLevels)
     });
 
     // Create tile layers from configuration
     // Find the correct tile layer based on selected year and type
-    const terrainLayer = mapConfig.tileLayers.find(tl => tl.year === selectedYear && tl.mapType === selectedType) || mapConfig.tileLayers[0]; // Fallback to first layer
+    const terrainLayer = mapConfig.tileLayers.find(tl =>
+        tl.year === selectedYear && tl.mapType === selectedType) || mapConfig.tileLayers[0]; // Fallback to first layer
     const layer = new TileLayer({
         source: new XYZ({
             projection: projection,
@@ -705,8 +706,8 @@ function initializeMap(mapId: string) {
             crossOrigin: 'anonymous',
             tileSize: 256
         }),
-        opacity: terrainLayer.opacity || 1.0,
-        visible: terrainLayer.enabled
+        opacity: 1.0,
+        visible: true
     });
 
     // Store reference to current tile layer for switching
@@ -1470,7 +1471,7 @@ function initializeSearchPanel() {
 
         if (!query.trim()) return;
 
-        const results: Array<{name: string, type: string, coords: [number, number], layer: string}> = [];
+        const results: Array<{ name: string, type: string, coords: [number, number], layer: string }> = [];
 
         // Search community deeds
         if (communityDeedsLayer && communityDeedsLayer.getVisible()) {
@@ -1576,7 +1577,7 @@ function initializeSearchPanel() {
         toggleBtn.addEventListener('click', togglePanel);
         toggleBtn.setAttribute('data-listener-attached', 'true');
     }
-    
+
     if (!collapseBtn.hasAttribute('data-listener-attached')) {
         collapseBtn.addEventListener('click', togglePanel);
         collapseBtn.setAttribute('data-listener-attached', 'true');
