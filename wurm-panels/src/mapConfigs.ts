@@ -79,10 +79,76 @@ export const MAPS: Record<string, MapConfig> = {
         resolutions: [8, 4, 2, 1, 0.5, 0.25], // 6 zoom levels with virtual zooming
         tileLayers: [
             {
-                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2025/terrain/{z}/{x}/{y}.png',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2025-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
                 year: 2025
-            }
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2025-02/topographica1/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2025
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2024-02/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2024
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2024-02/topographica1/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2024
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2023-02/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2023
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2023-02/topographica1/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2023
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2022-01/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2022
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2022-01/topographica1/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2022
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2021-01/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2021
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2021-01/topographica1/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2021
+            },
+            // this one is borked!
+            // { 
+            //     urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2020-01/terrain/{z}/{x}/{y}.png',
+            //     mapType: "terrain",
+            //     year: 2020
+            // },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2020-01/topographica1/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2020
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2018-12/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: 2019
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2018-12/topographica1/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: 2019
+            },
         ],
         startingLocations: [],
         communityMapUrl: "https://celebration.yaga.host"
