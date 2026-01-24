@@ -51,23 +51,23 @@ function getYearsForIsland(island: string) {
     const maps = getAllMaps();
     const map = maps.find(m => m.name === island);
     if (!map) return [];
-    return Array.from(new Set(map.tileLayers.map(tl => tl.year))).sort((a, b) => b - a);
+    return Array.from(new Set(map.tileLayers.map(tl => tl.year))).sort((a, b) => b.localeCompare(a));
 }
 
-function getTypesForIslandYear(island: string, year: number) {
+function getTypesForIslandYear(island: string, year: string) {
     const maps = getAllMaps();
     const map = maps.find(m => m.name === island);
     if (!map) return [];
     return map.tileLayers.filter(tl => tl.year === year).map(tl => tl.mapType);
 }
 
-function getTileLayer(map: any, year: number, mapType: string) {
-    return map?.tileLayers.find((tl: { year: number; mapType: string; }) => tl.year === year && tl.mapType === mapType);
+function getTileLayer(map: any, year: string, mapType: string) {
+    return map?.tileLayers.find((tl: { year: string; mapType: string; }) => tl.year === year && tl.mapType === mapType);
 }
 
 // Local storage helpers for map preferences
-function saveMapPreferences(island: string, year: number, type: string) {
-    const preferences = { island, year, type };
+function saveMapPreferences(island: string, year: string, type: string) {
+    const preferences = { island, year: String(year), type };
     localStorage.setItem('wurmMapPreferences', JSON.stringify(preferences));
 }
 
@@ -1095,10 +1095,10 @@ function populateMapSelector() {
     function updateYearSelect() {
         const availableYears = getYearsForIsland(selectedIsland);
         yearSelect.innerHTML = '';
-        availableYears.forEach((year: number) => {
+        availableYears.forEach((year: string) => {
             const option = document.createElement('option');
-            option.value = year.toString();
-            option.textContent = year.toString();
+            option.value = year;
+            option.textContent = year;
             yearSelect.appendChild(option);
         });
         // Don't override selectedYear here, just populate the dropdown
@@ -1136,21 +1136,21 @@ function populateMapSelector() {
     // Set current selection from saved preferences or current map
     islandSelect.value = selectedIsland;
     updateYearSelect();
-    yearSelect.value = selectedYear.toString();
+    yearSelect.value = selectedYear;
     updateTypeSelect();
     typeSelect.value = selectedType;
 
     islandSelect.addEventListener('change', () => {
         selectedIsland = islandSelect.value;
         updateYearSelect();
-        selectedYear = parseInt(yearSelect.value, 10);
+        selectedYear = yearSelect.value;
         updateTypeSelect();
         selectedType = typeSelect.value as "terrain" | "topological";
         saveMapPreferences(selectedIsland, selectedYear, selectedType);
         switchToSelectedMap();
     });
     yearSelect.addEventListener('change', () => {
-        selectedYear = parseInt(yearSelect.value, 10);
+        selectedYear = yearSelect.value;
         updateTypeSelect();
         selectedType = typeSelect.value as "terrain" | "topological";
         saveMapPreferences(selectedIsland, selectedYear, selectedType);
@@ -1290,13 +1290,13 @@ const islands = [...new Set(maps.map(m => m.name))];
 // Load saved preferences or use defaults
 const savedPrefs = loadMapPreferences();
 let selectedIsland = savedPrefs?.island || islands[0];
-let selectedYear = savedPrefs?.year || (getYearsForIsland(selectedIsland)[0] || 2025);
+let selectedYear = savedPrefs?.year ? String(savedPrefs.year) : (getYearsForIsland(selectedIsland)[0] || '2025');
 let selectedType = savedPrefs?.type || (getTypesForIslandYear(selectedIsland, selectedYear)[0] || 'terrain');
 
 // Ensure the saved island still exists, fallback to first available
 if (!islands.includes(selectedIsland)) {
     selectedIsland = islands[0];
-    selectedYear = getYearsForIsland(selectedIsland)[0] || 2025;
+    selectedYear = getYearsForIsland(selectedIsland)[0] || '2025';
     selectedType = getTypesForIslandYear(selectedIsland, selectedYear)[0] || 'terrain';
 }
 

@@ -4,7 +4,7 @@
 export interface TileLayerConfig {
     urlTemplate: string; // e.g., "https://.../{z}/{x}/{y}.png"
     mapType: 'terrain' | 'topological';
-    year: number;
+    year: string; // format: "YYYY-MM" when known, otherwise "YYYY"
 }
 
 /**
@@ -38,32 +38,32 @@ export const MAPS: Record<string, MapConfig> = {
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2025-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2025
+                year: '2025-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2025-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2025
+                year: '2025-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2024-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2024
+                year: '2024-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2024-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2024
+                year: '2024-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2023-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2023
+                year: '2023-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/cadence/2023-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2023
+                year: '2023-02'
             }
         ],
         startingLocations: [
@@ -81,52 +81,52 @@ export const MAPS: Record<string, MapConfig> = {
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2025-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2025
+                year: '2025-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2025-02/topographica1/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2025
+                year: '2025-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2024-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2024
+                year: '2024-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2024-02/topographica1/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2024
+                year: '2024-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2023-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2023
+                year: '2023-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2023-02/topographica1/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2023
+                year: '2023-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2022-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2022
+                year: '2022-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2022-01/topographica1/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2022
+                year: '2022-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2021-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2021
+                year: '2021-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2021-01/topographica1/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2021
+                year: '2021-01'
             },
             // this one is borked!
             // { 
@@ -137,17 +137,17 @@ export const MAPS: Record<string, MapConfig> = {
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2020-01/topographica1/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2020
+                year: '2020-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2018-12/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2019
+                year: '2018-12'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/celebration/2018-12/topographica1/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2019
+                year: '2018-12'
             },
         ],
         startingLocations: [],
@@ -163,12 +163,12 @@ export const MAPS: Record<string, MapConfig> = {
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/deliverance/2025/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2025
+                year: '2025'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/deliverance/2025/topo/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2025
+                year: '2025'
             }
         ],
         startingLocations: [],
@@ -184,12 +184,12 @@ export const MAPS: Record<string, MapConfig> = {
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/harmony/2025-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2025
+                year: '2025-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/harmony/2025-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2025
+                year: '2025-02'
             }
         ],
         startingLocations: [
@@ -208,7 +208,7 @@ export const MAPS: Record<string, MapConfig> = {
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/independence/2025/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2025
+                year: '2025'
             }
         ],
         startingLocations: [
@@ -226,52 +226,52 @@ export const MAPS: Record<string, MapConfig> = {
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2025-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2025
+                year: '2025-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2025-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2025
+                year: '2025-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2024-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2024
+                year: '2024-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2024-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2024
+                year: '2024-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2023-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2023
+                year: '2023-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2023-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2023
+                year: '2023-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2022-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2022
+                year: '2022-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2022-01/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2022
+                year: '2022-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2020-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2020
+                year: '2020-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/melody/2020-01/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2020
+                year: '2020-01'
             }
         ],
         startingLocations: [
@@ -289,92 +289,92 @@ export const MAPS: Record<string, MapConfig> = {
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2025-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2025
+                year: '2025-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2025-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2025
+                year: '2025-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2024-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2024
+                year: '2024-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2024-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2024
+                year: '2024-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2023-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2023
+                year: '2023-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2023-01/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2023
+                year: '2023-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2022-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2022
+                year: '2022-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2022-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2022
+                year: '2022-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2021-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2021
+                year: '2021-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2021-01/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2021
+                year: '2021-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2020-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2020
+                year: '2020-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2020-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2020
+                year: '2020-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2019-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2019
+                year: '2019-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2019-01/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2019
+                year: '2019-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2017-12/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2018
+                year: '2017-12'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2017-12/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2018
+                year: '2017-12'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2016-11/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2017
+                year: '2016-11'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/release/2016-11/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2017
+                year: '2016-11'
             }
         ],
         startingLocations: [
@@ -392,82 +392,82 @@ export const MAPS: Record<string, MapConfig> = {
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2025/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2025
+                year: '2025-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2025-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2025
+                year: '2025-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2024-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2024
+                year: '2024-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2024-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2024
+                year: '2024-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2023-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2023
+                year: '2023-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2023-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2023
+                year: '2023-02'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2022-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2022
+                year: '2022-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2022-01/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2022
+                year: '2022-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2021-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2021
+                year: '2021-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2021-01/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2021
+                year: '2021-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2020-01/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2020
+                year: '2020-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2020-01/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2020
+                year: '2020-01'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2018-12/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2019
+                year: '2018-12'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2018-12/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2019
+                year: '2018-12'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2016-11/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: 2017
+                year: '2016-11'
             },
             {
                 urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/xanadu/2016-11/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: 2017
+                year: '2016-11'
             },
         ],
         startingLocations: [
