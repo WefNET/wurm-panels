@@ -116,6 +116,34 @@ async fn open_skills_window(
 }
 
 #[tauri::command]
+async fn open_farming_grind_window(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(existing) = app.get_webview_window("farming-grind") {
+        println!("Farming Grind window already open; showing existing instance");
+        let _ = existing.show();
+        return Ok(());
+    }
+
+    let url = tauri::WebviewUrl::App("farming-grind-calc.html".into());
+
+    match tauri::webview::WebviewWindowBuilder::new(&app, "farming-grind", url)
+        .title("Farming Grind Calc")
+        .inner_size(600.0, 480.0)
+        .resizable(false)
+        .decorations(false)
+        .build()
+    {
+        Ok(window) => {
+            println!("Farming Grind window created successfully from Rust");
+            Ok(())
+        }
+        Err(e) => {
+            println!("Failed to create Farming Grind window: {:?}", e);
+            Err(format!("Failed to create window: {:?}", e))
+        }
+    }
+}
+
+#[tauri::command]
 async fn open_settings_window(
     app: tauri::AppHandle,
     settings_state: tauri::State<'_, SharedSettings>,
@@ -530,16 +558,33 @@ fn main() {
         })
         .setup(move |app: &mut tauri::App| {
             let quit_flag = Arc::clone(&quit_flag);
-            let open_skills = {
-                let item = MenuItem::new(app, "open_skills", true, None::<&str>)?;
-                item.set_text("Skills Tracker")?;
+
+            // Non-clickable grouping header for skill-related tools
+            let skill_tools_label = {
+                let item = MenuItem::new(app, "skill_tools", false, None::<&str>)?;
+                item.set_text("Skill Tools")?;
                 item
             };
+
+            let open_skills = {
+                let item = MenuItem::new(app, "open_skills", true, None::<&str>)?;
+                item.set_text("↳ Skills Tracker")?;
+                item
+            };
+
+// Farming Grind Calc menu item under Skill Tools
+                let open_farming_grind = {
+                    let item = MenuItem::new(app, "open_farming_grind", true, None::<&str>)?;
+                    item.set_text("↳ Farming Grind Calc")?;
+                item
+            };
+
             let open_trade = {
                 let item = MenuItem::new(app, "open_trade", true, None::<&str>)?;
                 item.set_text("Trade Monitor")?;
                 item
             };
+
             let open_granger = {
                 let item = MenuItem::new(app, "open_granger", true, None::<&str>)?;
                 item.set_text("Granger")?;
@@ -567,7 +612,9 @@ fn main() {
             };
 
             let tray_menu = MenuBuilder::new(app)
+                .item(&skill_tools_label)
                 .item(&open_skills)
+                .item(&open_farming_grind)
                 .item(&open_trade)
                 .item(&open_granger)
                 .item(&open_watcher)
@@ -576,9 +623,10 @@ fn main() {
                 .item(&open_settings)
                 .separator()
                 .item(&quit_item)
-                .build()?;
+                .build()?; 
 
             let id_open_skills = open_skills.id().clone();
+            let id_open_farming_grind = open_farming_grind.id().clone();
             let id_open_trade = open_trade.id().clone();
             let id_open_granger = open_granger.id().clone();
             let id_open_watcher = open_watcher.id().clone();
@@ -611,8 +659,14 @@ fn main() {
                             {
                                 println!("failed to open skills window: {}", err);
                             }
-                        });
-                    } else if event.id() == &id_open_trade {
+                        });                    } else if event.id() == &id_open_farming_grind {
+                        let handle = app.clone();
+                        async_runtime::spawn(async move {
+                            let handle = handle.clone();
+                            if let Err(err) = open_farming_grind_window(handle).await {
+                                println!("failed to open farming grind window: {}", err);
+                            }
+                        });                     } else if event.id() == &id_open_trade {
                         let handle_for_state = app.clone();
                         async_runtime::spawn(async move {
                             let state: tauri::State<SharedTradeEntries> = handle_for_state.state();

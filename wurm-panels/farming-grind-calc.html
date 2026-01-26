@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farming Grind Calc</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body { font-family: Inter, Avenir, Helvetica, Arial, sans-serif; margin: 0; background: transparent; }
+        .titlebar { display:flex; align-items:center; justify-content:space-between; background: rgba(33,33,33,0.9); color:#fff; padding:6px 12px; font-size:12px; -webkit-app-region:drag; }
+        .title-text { font-weight:600 }
+        .content { padding: 12px; }
+    </style>
+</head>
+<body>
+    <div class="titlebar" data-tauri-drag-region>
+        <span class="title-text">Farming Grind Calc</span>
+        <div class="window-actions">
+            <button id="close-button" class="window-button" data-tauri-drag-region="false" aria-label="Close">Close</button>
+        </div>
+    </div>
+    <div class="content">
+        <h1>Farming Grind Calc</h1>
+        <p>This is the placeholder page for the Farming Grind Calc. I'll wire up the calculator UI when you're ready.</p>
+    </div>
+    <script>
+        const closeButton = document.getElementById('close-button');
+        const tauriWindow = window.__TAURI__?.window;
+
+        async function closeCurrentWindow() {
+            if (!tauriWindow) return;
+            try {
+                if (typeof tauriWindow.getCurrent === 'function') {
+                    const currentWindow = tauriWindow.getCurrent();
+                    if (currentWindow && typeof currentWindow.close === 'function') {
+                        await currentWindow.close();
+                        return;
+                    }
+                }
+
+                if (typeof tauriWindow.getCurrentWindow === 'function') {
+                    const currentWindow = tauriWindow.getCurrentWindow();
+                    if (currentWindow && typeof currentWindow.close === 'function') {
+                        await currentWindow.close();
+                        return;
+                    }
+                }
+
+                if (tauriWindow.appWindow && typeof tauriWindow.appWindow.close === 'function') {
+                    await tauriWindow.appWindow.close();
+                }
+            } catch (error) {
+                console.error('Failed to close window:', error);
+            }
+        }
+
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                void closeCurrentWindow();
+            });
+        }
+    </script>
+</body>
+</html>
