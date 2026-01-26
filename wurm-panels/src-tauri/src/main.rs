@@ -127,12 +127,12 @@ async fn open_farming_grind_window(app: tauri::AppHandle) -> Result<(), String> 
 
     match tauri::webview::WebviewWindowBuilder::new(&app, "farming-grind", url)
         .title("Farming Grind Calc")
-        .inner_size(600.0, 480.0)
+        .inner_size(600.0, 520.0)
         .resizable(false)
         .decorations(false)
         .build()
     {
-        Ok(window) => {
+        Ok(_window) => {
             println!("Farming Grind window created successfully from Rust");
             Ok(())
         }
