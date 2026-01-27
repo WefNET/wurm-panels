@@ -161,14 +161,24 @@ export const MAPS: Record<string, MapConfig> = {
         resolutions: [8, 4, 2, 1, 0.5, 0.25], // 6 zoom levels with virtual zooming
         tileLayers: [
             {
-                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/deliverance/2025/terrain/{z}/{x}/{y}.png',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/deliverance/2025-02/terrain/{z}/{x}/{y}.png',
                 mapType: "terrain",
-                year: '2025'
+                year: '2025-02'
             },
             {
-                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/deliverance/2025/topo/{z}/{x}/{y}.png',
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/deliverance/2025-02/topographical/{z}/{x}/{y}.png',
                 mapType: "topological",
-                year: '2025'
+                year: '2025-02'
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/deliverance/2024-02/terrain/{z}/{x}/{y}.png',
+                mapType: "terrain",
+                year: '2024-02'
+            },
+            {
+                urlTemplate: 'https://red-river-af03.wurm-tiles.workers.dev/tiles/deliverance/2024-02/topographical/{z}/{x}/{y}.png',
+                mapType: "topological",
+                year: '2024-02'
             }
         ],
         startingLocations: [],
