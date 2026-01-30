@@ -1,24 +1,4 @@
-import Algebrite from 'algebrite';
-
 type FarmGroup = { easy: string; challenge: string; hard: string };
-
-function getDifficulty(modSkill: number): number {
-    // same algorithm as original; Algebrite nroots can return complex structure
-    const skill = -Math.round(-Math.pow(modSkill, 3) - 50000 * modSkill + 1000000);
-    const s = skill < 0 ? `-x^3 -50000x ${skill}` : `-x^3 -50000x +${skill}`;
-    const difficulty: any = (Algebrite as any).nroots(s);
-    let realVal = 0;
-    if (difficulty && difficulty.tensor && Array.isArray(difficulty.tensor.elem)) {
-        for (let i = 0; i < difficulty.tensor.elem.length; i++) {
-            const elem = difficulty.tensor.elem[i];
-            if (elem && Object.prototype.hasOwnProperty.call(elem, 'd')) {
-                const temp = Number(elem.d);
-                if (temp > 0) realVal = temp;
-            }
-        }
-    }
-    return realVal;
-}
 
 function getFarmGroup(difficulty: number): FarmGroup {
     let toReturn: FarmGroup = {
@@ -48,9 +28,9 @@ function getFarmGroup(difficulty: number): FarmGroup {
     } else if (difficulty >= 42.5 && difficulty < 50) {
         toReturn = { easy: 'corn at 40 difficulty.', challenge: 'tomatoes at 45 difficulty.', hard: 'lettuce at 55 difficulty.' };
     } else if (difficulty >= 50 && difficulty < 57.5) {
-        toReturn = { easy: 'tomatoes at 45 difficulty.', challenge: 'lettus at 55 difficulty.', hard: 'onion and strawberry at 60 difficulty.' };
+        toReturn = { easy: 'tomatoes at 45 difficulty.', challenge: 'lettuce at 55 difficulty.', hard: 'onion and strawberry at 60 difficulty.' };
     } else if (difficulty >= 57.5 && difficulty < 62.5) {
-        toReturn = { easy: 'lettus at 55 difficulty.', challenge: 'onion and strawberry at 60 difficulty.', hard: 'peas at 65 difficulty.' };
+        toReturn = { easy: 'lettuce at 55 difficulty.', challenge: 'onion and strawberry at 60 difficulty.', hard: 'peas at 65 difficulty.' };
     } else if (difficulty >= 62.5 && difficulty < 67.5) {
         toReturn = { easy: 'onion and strawberry at 60 difficulty.', challenge: 'peas at 65 difficulty.', hard: 'garlic at 70 difficulty.' };
     } else if (difficulty >= 67.5 && difficulty < 75) {
@@ -256,5 +236,3 @@ if (document.readyState === 'loading') {
 } else {
     initFarmingUI();
 }
-
-export { getDifficulty, getFarmGroup, effectiveSkill, getGaussianMean, farmingGetDiff };

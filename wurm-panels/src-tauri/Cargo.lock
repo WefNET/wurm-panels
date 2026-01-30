@@ -5590,7 +5590,7 @@ dependencies = [
 
 [[package]]
 name = "wurm-panels"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "directories",
  "image",
