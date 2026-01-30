@@ -39,6 +39,8 @@ export default defineConfig(async () => ({
         granger: resolve(rootDir, "granger.html"),
         trade: resolve(rootDir, "trade.html"),
         settings: resolve(rootDir, "settings.html"),
+        splashscreen: resolve(rootDir, "splashscreen.html"),
+        farming: resolve(rootDir, "farming-grind-calc.html"),
       },
     },
   },
