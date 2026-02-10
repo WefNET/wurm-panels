@@ -510,6 +510,7 @@ fn main() {
             community_deeds_persistence::load_community_deeds,
             community_deeds_persistence::save_community_deeds,
             community_deeds_persistence::fetch_community_deeds,
+            community_deeds_persistence::fetch_all_community_data,
             community_deeds_persistence::load_community_guard_towers,
             community_deeds_persistence::save_community_guard_towers,
             community_deeds_persistence::fetch_community_guard_towers,
@@ -572,11 +573,11 @@ fn main() {
                 item
             };
 
-// Farming Grind Calc menu item under Skill Tools
-                let open_farming_grind = {
-                    let item = MenuItem::new(app, "open_farming_grind", true, None::<&str>)?;
-                    item.set_text("↳ Farming Grind Calc")?;
-                item
+            // Farming Grind Calc menu item under Skill Tools
+            let open_farming_grind = {
+                let item = MenuItem::new(app, "open_farming_grind", true, None::<&str>)?;
+                item.set_text("↳ Farming Grind Calc")?;
+            item
             };
 
             let open_trade = {
@@ -590,21 +591,25 @@ fn main() {
                 item.set_text("Granger")?;
                 item
             };
+
             let open_watcher = {
                 let item = MenuItem::new(app, "open_watcher", true, None::<&str>)?;
                 item.set_text("Watcher")?;
                 item
             };
+
             let open_map = {
                 let item = MenuItem::new(app, "open_map", true, None::<&str>)?;
                 item.set_text("Maps")?;
                 item
             };
+
             let open_settings = {
                 let item = MenuItem::new(app, "open_settings", true, None::<&str>)?;
                 item.set_text("Settings")?;
                 item
             };
+
             let quit_item = {
                 let item = MenuItem::new(app, "quit", true, None::<&str>)?;
                 item.set_text("Quit")?;

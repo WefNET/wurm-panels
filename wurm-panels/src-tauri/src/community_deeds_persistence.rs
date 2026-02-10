@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{ Deserialize, Serialize };
 use std::fs;
 use std::path::PathBuf;
 
@@ -65,8 +65,19 @@ pub struct CommunityMapObjectsCache {
     pub fetched_at: i64, // Unix timestamp
 }
 
+#[derive(Clone, Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct CommunityBulkData {
+    pub deeds: Vec<CommunityDeed>,
+    pub guard_towers: Vec<CommunityStructure>,
+    pub mission_structures: Vec<CommunityStructure>,
+    pub bridges: Vec<CommunityBridge>,
+    pub map_objects: Vec<CommunityMapObject>,
+}
+
 fn config_dir_path() -> Result<PathBuf, String> {
-    directories::ProjectDirs::from("com", "WefNET", "wurm-sales")
+    directories::ProjectDirs
+        ::from("com", "WefNET", "wurm-sales")
         .map(|dirs| dirs.config_dir().to_path_buf())
         .ok_or_else(|| "Unable to resolve configuration directory".to_string())
 }
@@ -98,7 +109,8 @@ pub fn load_community_deeds(map_id: String) -> Result<Option<CommunityDeedsCache
             let file_name = get_deeds_file_name(&map_id);
             let deeds_path = config_dir.join(&file_name);
             if deeds_path.exists() {
-                let raw = fs::read_to_string(&deeds_path)
+                let raw = fs
+                    ::read_to_string(&deeds_path)
                     .map_err(|e| format!("Failed to read community_deeds.json: {}", e))?;
 
                 if raw.trim().is_empty() {
@@ -109,7 +121,8 @@ pub fn load_community_deeds(map_id: String) -> Result<Option<CommunityDeedsCache
                 match cache {
                     Ok(cache) => {
                         // Check if cache is older than 24 hours
-                        let now = std::time::SystemTime::now()
+                        let now = std::time::SystemTime
+                            ::now()
                             .duration_since(std::time::UNIX_EPOCH)
                             .unwrap()
                             .as_secs() as i64;
@@ -126,26 +139,36 @@ pub fn load_community_deeds(map_id: String) -> Result<Option<CommunityDeedsCache
                     Err(_) => {
                         // Try to parse as old format (just array of deeds)
                         println!("Attempting to parse as legacy format");
-                        let deeds: Vec<CommunityDeed> = serde_json::from_str(&raw)
-                            .map_err(|e| format!("Failed to deserialize community deeds for map '{}': {}", map_id, e))?;
-                        
+                        let deeds: Vec<CommunityDeed> = serde_json
+                            ::from_str(&raw)
+                            .map_err(|e|
+                                format!(
+                                    "Failed to deserialize community deeds for map '{}': {}",
+                                    map_id,
+                                    e
+                                )
+                            )?;
+
                         // Wrap in cache with current timestamp
-                        let now = std::time::SystemTime::now()
+                        let now = std::time::SystemTime
+                            ::now()
                             .duration_since(std::time::UNIX_EPOCH)
                             .unwrap()
                             .as_secs() as i64;
-                        
+
                         let cache = CommunityDeedsCache {
                             deeds,
                             fetched_at: now,
                         };
-                        
+
                         // Save in new format
-                        let serialized = serde_json::to_string_pretty(&cache)
+                        let serialized = serde_json
+                            ::to_string_pretty(&cache)
                             .map_err(|e| format!("Failed to serialize updated cache: {}", e))?;
-                        fs::write(&deeds_path, serialized)
+                        fs
+                            ::write(&deeds_path, serialized)
                             .map_err(|e| format!("Failed to write updated cache: {}", e))?;
-                        
+
                         println!("Converted legacy cache to new format");
                         Ok(Some(cache))
                     }
@@ -163,14 +186,16 @@ pub fn save_community_deeds(map_id: String, deeds: Vec<CommunityDeed>) -> Result
     let config_dir = config_dir_path()?;
 
     if !config_dir.exists() {
-        fs::create_dir_all(&config_dir)
+        fs
+            ::create_dir_all(&config_dir)
             .map_err(|e| format!("Failed to create config directory: {}", e))?;
     }
 
     let file_name = get_deeds_file_name(&map_id);
     let deeds_path = config_dir.join(&file_name);
 
-    let now = std::time::SystemTime::now()
+    let now = std::time::SystemTime
+        ::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_secs() as i64;
@@ -180,10 +205,12 @@ pub fn save_community_deeds(map_id: String, deeds: Vec<CommunityDeed>) -> Result
         fetched_at: now,
     };
 
-    let serialized = serde_json::to_string_pretty(&cache)
+    let serialized = serde_json
+        ::to_string_pretty(&cache)
         .map_err(|e| format!("Failed to serialize community deeds: {}", e))?;
 
-    fs::write(&deeds_path, serialized)
+    fs
+        ::write(&deeds_path, serialized)
         .map_err(|e| format!("Failed to write community_deeds.json: {}", e))?;
 
     println!("Community deeds saved to {:?}", deeds_path);
@@ -191,22 +218,32 @@ pub fn save_community_deeds(map_id: String, deeds: Vec<CommunityDeed>) -> Result
 }
 
 #[tauri::command]
-pub fn load_community_guard_towers(map_id: String) -> Result<Option<CommunityStructuresCache>, String> {
+pub fn load_community_guard_towers(
+    map_id: String
+) -> Result<Option<CommunityStructuresCache>, String> {
     load_community_structures(&map_id, &get_guard_towers_file_name(&map_id))
 }
 
 #[tauri::command]
-pub fn save_community_guard_towers(map_id: String, structures: Vec<CommunityStructure>) -> Result<(), String> {
+pub fn save_community_guard_towers(
+    map_id: String,
+    structures: Vec<CommunityStructure>
+) -> Result<(), String> {
     save_community_structures(&map_id, structures, &get_guard_towers_file_name(&map_id))
 }
 
 #[tauri::command]
-pub fn load_community_mission_structures(map_id: String) -> Result<Option<CommunityStructuresCache>, String> {
+pub fn load_community_mission_structures(
+    map_id: String
+) -> Result<Option<CommunityStructuresCache>, String> {
     load_community_structures(&map_id, &get_mission_structures_file_name(&map_id))
 }
 
 #[tauri::command]
-pub fn save_community_mission_structures(map_id: String, structures: Vec<CommunityStructure>) -> Result<(), String> {
+pub fn save_community_mission_structures(
+    map_id: String,
+    structures: Vec<CommunityStructure>
+) -> Result<(), String> {
     save_community_structures(&map_id, structures, &get_mission_structures_file_name(&map_id))
 }
 
@@ -221,21 +258,30 @@ pub fn save_community_bridges(map_id: String, bridges: Vec<CommunityBridge>) -> 
 }
 
 #[tauri::command]
-pub fn load_community_map_objects(map_id: String) -> Result<Option<CommunityMapObjectsCache>, String> {
+pub fn load_community_map_objects(
+    map_id: String
+) -> Result<Option<CommunityMapObjectsCache>, String> {
     load_community_map_objects_cache(&map_id, &get_map_objects_file_name(&map_id))
 }
 
 #[tauri::command]
-pub fn save_community_map_objects(map_id: String, objects: Vec<CommunityMapObject>) -> Result<(), String> {
+pub fn save_community_map_objects(
+    map_id: String,
+    objects: Vec<CommunityMapObject>
+) -> Result<(), String> {
     save_community_map_objects_cache(&map_id, objects, &get_map_objects_file_name(&map_id))
 }
 
-fn load_community_structures(map_id: &str, file_name: &str) -> Result<Option<CommunityStructuresCache>, String> {
+fn load_community_structures(
+    map_id: &str,
+    file_name: &str
+) -> Result<Option<CommunityStructuresCache>, String> {
     match config_dir_path() {
         Ok(config_dir) => {
             let structures_path = config_dir.join(file_name);
             if structures_path.exists() {
-                let raw = fs::read_to_string(&structures_path)
+                let raw = fs
+                    ::read_to_string(&structures_path)
                     .map_err(|e| format!("Failed to read {}: {}", file_name, e))?;
 
                 if raw.trim().is_empty() {
@@ -246,7 +292,8 @@ fn load_community_structures(map_id: &str, file_name: &str) -> Result<Option<Com
                 match cache {
                     Ok(cache) => {
                         // Check if cache is older than 24 hours
-                        let now = std::time::SystemTime::now()
+                        let now = std::time::SystemTime
+                            ::now()
                             .duration_since(std::time::UNIX_EPOCH)
                             .unwrap()
                             .as_secs() as i64;
@@ -263,11 +310,19 @@ fn load_community_structures(map_id: &str, file_name: &str) -> Result<Option<Com
                     Err(_) => {
                         // Try to parse as old format (just array of structures)
                         println!("Attempting to parse as legacy format");
-                        let structures: Vec<CommunityStructure> = serde_json::from_str(&raw)
-                            .map_err(|e| format!("Failed to deserialize community structures for map '{}': {}", map_id, e))?;
+                        let structures: Vec<CommunityStructure> = serde_json
+                            ::from_str(&raw)
+                            .map_err(|e|
+                                format!(
+                                    "Failed to deserialize community structures for map '{}': {}",
+                                    map_id,
+                                    e
+                                )
+                            )?;
 
                         // Wrap in cache with current timestamp
-                        let now = std::time::SystemTime::now()
+                        let now = std::time::SystemTime
+                            ::now()
                             .duration_since(std::time::UNIX_EPOCH)
                             .unwrap()
                             .as_secs() as i64;
@@ -278,9 +333,11 @@ fn load_community_structures(map_id: &str, file_name: &str) -> Result<Option<Com
                         };
 
                         // Save in new format
-                        let serialized = serde_json::to_string_pretty(&cache)
+                        let serialized = serde_json
+                            ::to_string_pretty(&cache)
                             .map_err(|e| format!("Failed to serialize updated cache: {}", e))?;
-                        fs::write(&structures_path, serialized)
+                        fs
+                            ::write(&structures_path, serialized)
                             .map_err(|e| format!("Failed to write updated cache: {}", e))?;
 
                         println!("Converted legacy cache to new format");
@@ -295,17 +352,23 @@ fn load_community_structures(map_id: &str, file_name: &str) -> Result<Option<Com
     }
 }
 
-fn save_community_structures(_map_id: &str, structures: Vec<CommunityStructure>, file_name: &str) -> Result<(), String> {
+fn save_community_structures(
+    _map_id: &str,
+    structures: Vec<CommunityStructure>,
+    file_name: &str
+) -> Result<(), String> {
     let config_dir = config_dir_path()?;
 
     if !config_dir.exists() {
-        fs::create_dir_all(&config_dir)
+        fs
+            ::create_dir_all(&config_dir)
             .map_err(|e| format!("Failed to create config directory: {}", e))?;
     }
 
     let structures_path = config_dir.join(file_name);
 
-    let now = std::time::SystemTime::now()
+    let now = std::time::SystemTime
+        ::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_secs() as i64;
@@ -315,22 +378,28 @@ fn save_community_structures(_map_id: &str, structures: Vec<CommunityStructure>,
         fetched_at: now,
     };
 
-    let serialized = serde_json::to_string_pretty(&cache)
+    let serialized = serde_json
+        ::to_string_pretty(&cache)
         .map_err(|e| format!("Failed to serialize community structures: {}", e))?;
 
-    fs::write(&structures_path, serialized)
+    fs
+        ::write(&structures_path, serialized)
         .map_err(|e| format!("Failed to write {}: {}", file_name, e))?;
 
     println!("Community structures saved to {:?}", structures_path);
     Ok(())
 }
 
-fn load_community_bridges_cache(_map_id: &str, file_name: &str) -> Result<Option<CommunityBridgesCache>, String> {
+fn load_community_bridges_cache(
+    _map_id: &str,
+    file_name: &str
+) -> Result<Option<CommunityBridgesCache>, String> {
     match config_dir_path() {
         Ok(config_dir) => {
             let bridges_path = config_dir.join(file_name);
             if bridges_path.exists() {
-                let raw = fs::read_to_string(&bridges_path)
+                let raw = fs
+                    ::read_to_string(&bridges_path)
                     .map_err(|e| format!("Failed to read {}: {}", file_name, e))?;
 
                 if raw.trim().is_empty() {
@@ -341,7 +410,8 @@ fn load_community_bridges_cache(_map_id: &str, file_name: &str) -> Result<Option
                 match cache {
                     Ok(cache) => {
                         // Check if cache is older than 24 hours
-                        let now = std::time::SystemTime::now()
+                        let now = std::time::SystemTime
+                            ::now()
                             .duration_since(std::time::UNIX_EPOCH)
                             .unwrap()
                             .as_secs() as i64;
@@ -358,11 +428,14 @@ fn load_community_bridges_cache(_map_id: &str, file_name: &str) -> Result<Option
                     Err(e1) => {
                         // Try to parse as old format (just array of bridges)
                         println!("Attempting to parse as legacy format");
-                        let legacy_result: Result<Vec<CommunityBridge>, _> = serde_json::from_str(&raw);
+                        let legacy_result: Result<Vec<CommunityBridge>, _> = serde_json::from_str(
+                            &raw
+                        );
                         match legacy_result {
                             Ok(bridges) => {
                                 // Wrap in cache with current timestamp
-                                let now = std::time::SystemTime::now()
+                                let now = std::time::SystemTime
+                                    ::now()
                                     .duration_since(std::time::UNIX_EPOCH)
                                     .unwrap()
                                     .as_secs() as i64;
@@ -373,9 +446,13 @@ fn load_community_bridges_cache(_map_id: &str, file_name: &str) -> Result<Option
                                 };
 
                                 // Save in new format
-                                let serialized = serde_json::to_string_pretty(&cache)
-                                    .map_err(|e| format!("Failed to serialize updated cache: {}", e))?;
-                                fs::write(&bridges_path, serialized)
+                                let serialized = serde_json
+                                    ::to_string_pretty(&cache)
+                                    .map_err(|e|
+                                        format!("Failed to serialize updated cache: {}", e)
+                                    )?;
+                                fs
+                                    ::write(&bridges_path, serialized)
                                     .map_err(|e| format!("Failed to write updated cache: {}", e))?;
 
                                 println!("Converted legacy cache to new format");
@@ -385,15 +462,17 @@ fn load_community_bridges_cache(_map_id: &str, file_name: &str) -> Result<Option
                                 // Both parsing attempts failed, log the errors and return None to trigger refetch
                                 println!("Failed to parse bridges cache as new format: {}", e1);
                                 println!("Failed to parse bridges cache as legacy format: {}", e2);
-                                println!("Cache file appears corrupted, deleting and will refetch data");
-                                
+                                println!(
+                                    "Cache file appears corrupted, deleting and will refetch data"
+                                );
+
                                 // Delete the corrupted file
                                 if let Err(delete_err) = fs::remove_file(&bridges_path) {
                                     println!("Failed to delete corrupted cache file: {}", delete_err);
                                 } else {
                                     println!("Deleted corrupted cache file");
                                 }
-                                
+
                                 Ok(None)
                             }
                         }
@@ -407,17 +486,23 @@ fn load_community_bridges_cache(_map_id: &str, file_name: &str) -> Result<Option
     }
 }
 
-fn save_community_bridges_cache(_map_id: &str, bridges: Vec<CommunityBridge>, file_name: &str) -> Result<(), String> {
+fn save_community_bridges_cache(
+    _map_id: &str,
+    bridges: Vec<CommunityBridge>,
+    file_name: &str
+) -> Result<(), String> {
     let config_dir = config_dir_path()?;
 
     if !config_dir.exists() {
-        fs::create_dir_all(&config_dir)
+        fs
+            ::create_dir_all(&config_dir)
             .map_err(|e| format!("Failed to create config directory: {}", e))?;
     }
 
     let bridges_path = config_dir.join(file_name);
 
-    let now = std::time::SystemTime::now()
+    let now = std::time::SystemTime
+        ::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_secs() as i64;
@@ -427,22 +512,28 @@ fn save_community_bridges_cache(_map_id: &str, bridges: Vec<CommunityBridge>, fi
         fetched_at: now,
     };
 
-    let serialized = serde_json::to_string_pretty(&cache)
+    let serialized = serde_json
+        ::to_string_pretty(&cache)
         .map_err(|e| format!("Failed to serialize community bridges: {}", e))?;
 
-    fs::write(&bridges_path, serialized)
+    fs
+        ::write(&bridges_path, serialized)
         .map_err(|e| format!("Failed to write {}: {}", file_name, e))?;
 
     println!("Community bridges saved to {:?}", bridges_path);
     Ok(())
 }
 
-fn load_community_map_objects_cache(_map_id: &str, file_name: &str) -> Result<Option<CommunityMapObjectsCache>, String> {
+fn load_community_map_objects_cache(
+    _map_id: &str,
+    file_name: &str
+) -> Result<Option<CommunityMapObjectsCache>, String> {
     match config_dir_path() {
         Ok(config_dir) => {
             let objects_path = config_dir.join(file_name);
             if objects_path.exists() {
-                let raw = fs::read_to_string(&objects_path)
+                let raw = fs
+                    ::read_to_string(&objects_path)
                     .map_err(|e| format!("Failed to read {}: {}", file_name, e))?;
 
                 if raw.trim().is_empty() {
@@ -453,7 +544,8 @@ fn load_community_map_objects_cache(_map_id: &str, file_name: &str) -> Result<Op
                 match cache {
                     Ok(cache) => {
                         // Check if cache is older than 24 hours
-                        let now = std::time::SystemTime::now()
+                        let now = std::time::SystemTime
+                            ::now()
                             .duration_since(std::time::UNIX_EPOCH)
                             .unwrap()
                             .as_secs() as i64;
@@ -470,11 +562,15 @@ fn load_community_map_objects_cache(_map_id: &str, file_name: &str) -> Result<Op
                     Err(e1) => {
                         // Try to parse as old format (just array of objects)
                         println!("Attempting to parse as legacy format");
-                        let legacy_result: Result<Vec<CommunityMapObject>, _> = serde_json::from_str(&raw);
+                        let legacy_result: Result<
+                            Vec<CommunityMapObject>,
+                            _
+                        > = serde_json::from_str(&raw);
                         match legacy_result {
                             Ok(objects) => {
                                 // Wrap in cache with current timestamp
-                                let now = std::time::SystemTime::now()
+                                let now = std::time::SystemTime
+                                    ::now()
                                     .duration_since(std::time::UNIX_EPOCH)
                                     .unwrap()
                                     .as_secs() as i64;
@@ -485,9 +581,13 @@ fn load_community_map_objects_cache(_map_id: &str, file_name: &str) -> Result<Op
                                 };
 
                                 // Save in new format
-                                let serialized = serde_json::to_string_pretty(&cache)
-                                    .map_err(|e| format!("Failed to serialize updated cache: {}", e))?;
-                                fs::write(&objects_path, serialized)
+                                let serialized = serde_json
+                                    ::to_string_pretty(&cache)
+                                    .map_err(|e|
+                                        format!("Failed to serialize updated cache: {}", e)
+                                    )?;
+                                fs
+                                    ::write(&objects_path, serialized)
                                     .map_err(|e| format!("Failed to write updated cache: {}", e))?;
 
                                 println!("Converted legacy cache to new format");
@@ -497,15 +597,17 @@ fn load_community_map_objects_cache(_map_id: &str, file_name: &str) -> Result<Op
                                 // Both parsing attempts failed, log the errors and return None to trigger refetch
                                 println!("Failed to parse map objects cache as new format: {}", e1);
                                 println!("Failed to parse map objects cache as legacy format: {}", e2);
-                                println!("Cache file appears corrupted, deleting and will refetch data");
-                                
+                                println!(
+                                    "Cache file appears corrupted, deleting and will refetch data"
+                                );
+
                                 // Delete the corrupted file
                                 if let Err(delete_err) = fs::remove_file(&objects_path) {
                                     println!("Failed to delete corrupted cache file: {}", delete_err);
                                 } else {
                                     println!("Deleted corrupted cache file");
                                 }
-                                
+
                                 Ok(None)
                             }
                         }
@@ -519,17 +621,23 @@ fn load_community_map_objects_cache(_map_id: &str, file_name: &str) -> Result<Op
     }
 }
 
-fn save_community_map_objects_cache(_map_id: &str, objects: Vec<CommunityMapObject>, file_name: &str) -> Result<(), String> {
+fn save_community_map_objects_cache(
+    _map_id: &str,
+    objects: Vec<CommunityMapObject>,
+    file_name: &str
+) -> Result<(), String> {
     let config_dir = config_dir_path()?;
 
     if !config_dir.exists() {
-        fs::create_dir_all(&config_dir)
+        fs
+            ::create_dir_all(&config_dir)
             .map_err(|e| format!("Failed to create config directory: {}", e))?;
     }
 
     let objects_path = config_dir.join(file_name);
 
-    let now = std::time::SystemTime::now()
+    let now = std::time::SystemTime
+        ::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_secs() as i64;
@@ -539,47 +647,82 @@ fn save_community_map_objects_cache(_map_id: &str, objects: Vec<CommunityMapObje
         fetched_at: now,
     };
 
-    let serialized = serde_json::to_string_pretty(&cache)
+    let serialized = serde_json
+        ::to_string_pretty(&cache)
         .map_err(|e| format!("Failed to serialize community map objects: {}", e))?;
 
-    fs::write(&objects_path, serialized)
+    fs
+        ::write(&objects_path, serialized)
         .map_err(|e| format!("Failed to write {}: {}", file_name, e))?;
 
     println!("Community map objects saved to {:?}", objects_path);
     Ok(())
 }
 
-#[tauri::command]
-pub fn fetch_community_deeds(url: String) -> Result<Vec<CommunityDeed>, String> {
-    // Fetch the HTML
-    let client = reqwest::blocking::Client::new();
-    let response = client.get(&url).send()
-        .map_err(|e| format!("Failed to fetch URL: {}", e))?;
-    let html = response.text()
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-
+fn extract_sheet_data_json(html: &str) -> Result<serde_json::Value, String> {
     // Find window.sheetData
     let start_marker = "window.sheetData = ";
-    let start = html.find(start_marker)
-        .ok_or("window.sheetData not found")?;
+    let start = html.find(start_marker).ok_or("window.sheetData not found")?;
     let json_start = start + start_marker.len();
-    let end = html[json_start..].find(';')
+    let end = html[json_start..]
+        .find(';')
         .map(|i| json_start + i)
         .ok_or("End of sheetData not found")?;
     let json_str = html[json_start..end].trim();
 
     // Parse JSON
-    let data: serde_json::Value = serde_json::from_str(json_str)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+    serde_json::from_str(json_str).map_err(|e| format!("Failed to parse JSON: {}", e))
+}
 
+#[tauri::command]
+pub fn fetch_all_community_data(url: String) -> Result<CommunityBulkData, String> {
+    // Fetch the HTML
+    let client = reqwest::blocking::Client::new();
+    let response = client
+        .get(&url)
+        .send()
+        .map_err(|e| format!("Failed to fetch URL: {}", e))?;
+    let html = response.text().map_err(|e| format!("Failed to read response: {}", e))?;
+
+    let data = extract_sheet_data_json(&html)?;
+
+    Ok(CommunityBulkData {
+        deeds: extract_community_deeds_from_json(&data),
+        guard_towers: extract_community_structures_from_json(&data, "GuardTowerFreedom"),
+        mission_structures: extract_community_structures_from_json(&data, "MissionStructure"),
+        bridges: extract_community_bridges_from_json(&data),
+        map_objects: extract_community_map_objects_from_json(&data),
+    })
+}
+
+#[tauri::command]
+pub fn fetch_community_deeds(url: String) -> Result<Vec<CommunityDeed>, String> {
+    // Fetch the HTML
+    let client = reqwest::blocking::Client::new();
+    let response = client
+        .get(&url)
+        .send()
+        .map_err(|e| format!("Failed to fetch URL: {}", e))?;
+    let html = response.text().map_err(|e| format!("Failed to read response: {}", e))?;
+
+    let data = extract_sheet_data_json(&html)?;
+    Ok(extract_community_deeds_from_json(&data))
+}
+
+fn extract_community_deeds_from_json(data: &serde_json::Value) -> Vec<CommunityDeed> {
     // Extract values
-    let values = data["valueRanges"][0]["values"]
-        .as_array()
-        .ok_or("Invalid data structure")?;
+    let values = match data["valueRanges"][0]["values"].as_array() {
+        Some(v) => v,
+        None => {
+            println!("No deeds data found in valueRanges[0]");
+            return vec![];
+        }
+    };
 
-    println!("Total values: {}", values.len());
+    println!("Total deeds values: {}", values.len());
 
-    let deeds: Vec<CommunityDeed> = values.iter()
+    let deeds: Vec<CommunityDeed> = values
+        .iter()
         .enumerate()
         .filter_map(|(i, row)| {
             let arr = match row.as_array() {
@@ -589,7 +732,7 @@ pub fn fetch_community_deeds(url: String) -> Result<Vec<CommunityDeed>, String> 
                     return None;
                 }
             };
-            if arr.len() < 3 { 
+            if arr.len() < 3 {
                 println!("Skipping row {}: len {}", i, arr.len());
                 return None;
             }
@@ -644,43 +787,50 @@ pub fn fetch_community_deeds(url: String) -> Result<Vec<CommunityDeed>, String> 
         .collect();
 
     println!("Collected deeds: {}", deeds.len());
-
-    Ok(deeds)
+    deeds
 }
 
 #[tauri::command]
 pub fn fetch_community_guard_towers(url: String) -> Result<Vec<CommunityStructure>, String> {
-    fetch_community_structures(url, "GuardTowerFreedom")
+    let client = reqwest::blocking::Client::new();
+    let response = client
+        .get(&url)
+        .send()
+        .map_err(|e| format!("Failed to fetch URL: {}", e))?;
+    let html = response.text().map_err(|e| format!("Failed to read response: {}", e))?;
+
+    let data = extract_sheet_data_json(&html)?;
+    Ok(extract_community_structures_from_json(&data, "GuardTowerFreedom"))
 }
 
 #[tauri::command]
 pub fn fetch_community_mission_structures(url: String) -> Result<Vec<CommunityStructure>, String> {
-    fetch_community_structures(url, "MissionStructure")
+    let client = reqwest::blocking::Client::new();
+    let response = client
+        .get(&url)
+        .send()
+        .map_err(|e| format!("Failed to fetch URL: {}", e))?;
+    let html = response.text().map_err(|e| format!("Failed to read response: {}", e))?;
+
+    let data = extract_sheet_data_json(&html)?;
+    Ok(extract_community_structures_from_json(&data, "MissionStructure"))
 }
 
 #[tauri::command]
 pub fn fetch_community_bridges(url: String) -> Result<Vec<CommunityBridge>, String> {
     // Fetch the HTML
     let client = reqwest::blocking::Client::new();
-    let response = client.get(&url).send()
+    let response = client
+        .get(&url)
+        .send()
         .map_err(|e| format!("Failed to fetch URL: {}", e))?;
-    let html = response.text()
-        .map_err(|e| format!("Failed to read response: {}", e))?;
+    let html = response.text().map_err(|e| format!("Failed to read response: {}", e))?;
 
-    // Find window.sheetData
-    let start_marker = "window.sheetData = ";
-    let start = html.find(start_marker)
-        .ok_or("window.sheetData not found")?;
-    let json_start = start + start_marker.len();
-    let end = html[json_start..].find(';')
-        .map(|i| json_start + i)
-        .ok_or("End of sheetData not found")?;
-    let json_str = html[json_start..end].trim();
+    let data = extract_sheet_data_json(&html)?;
+    Ok(extract_community_bridges_from_json(&data))
+}
 
-    // Parse JSON
-    let data: serde_json::Value = serde_json::from_str(json_str)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
-
+fn extract_community_bridges_from_json(data: &serde_json::Value) -> Vec<CommunityBridge> {
     // Debug: Log all valueRanges
     if let Some(value_ranges) = data["valueRanges"].as_array() {
         println!("Available valueRanges count: {}", value_ranges.len());
@@ -706,13 +856,14 @@ pub fn fetch_community_bridges(url: String) -> Result<Vec<CommunityBridge>, Stri
         v
     } else {
         println!("No bridges data found in any valueRanges, returning empty array");
-        return Ok(vec![]);
+        return vec![];
     };
 
     println!("Total bridges values: {}", values.len());
     println!("First few bridge rows: {:?}", &values.iter().take(3).collect::<Vec<_>>());
 
-    let bridges: Vec<CommunityBridge> = values.iter()
+    let bridges: Vec<CommunityBridge> = values
+        .iter()
         .enumerate()
         .filter_map(|(i, row)| {
             let arr = match row.as_array() {
@@ -803,52 +954,38 @@ pub fn fetch_community_bridges(url: String) -> Result<Vec<CommunityBridge>, Stri
         .collect();
 
     println!("Collected bridges: {}", bridges.len());
-
-    Ok(bridges)
+    bridges
 }
 
 #[tauri::command]
 pub fn fetch_community_map_objects(url: String) -> Result<Vec<CommunityMapObject>, String> {
     // Fetch the HTML
     let client = reqwest::blocking::Client::new();
-    let response = client.get(&url).send()
+    let response = client
+        .get(&url)
+        .send()
         .map_err(|e| format!("Failed to fetch URL: {}", e))?;
-    let html = response.text()
-        .map_err(|e| format!("Failed to read response: {}", e))?;
+    let html = response.text().map_err(|e| format!("Failed to read response: {}", e))?;
 
-    // Find window.sheetData
-    let start_marker = "window.sheetData = ";
-    let start = html.find(start_marker)
-        .ok_or("window.sheetData not found")?;
-    let json_start = start + start_marker.len();
-    let end = html[json_start..].find(';')
-        .map(|i| json_start + i)
-        .ok_or("End of sheetData not found")?;
-    let json_str = html[json_start..end].trim();
+    let data = extract_sheet_data_json(&html)?;
+    Ok(extract_community_map_objects_from_json(&data))
+}
 
-    // Parse JSON
-    let data: serde_json::Value = serde_json::from_str(json_str)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
-
-    // Debug: Log all valueRanges
-    if let Some(value_ranges) = data["valueRanges"].as_array() {
-        println!("Available valueRanges count: {}", value_ranges.len());
-        for (i, vr) in value_ranges.iter().enumerate() {
-            if let Some(values) = vr["values"].as_array() {
-                println!("valueRanges[{}]: {} rows", i, values.len());
-            }
-        }
-    }
-
+fn extract_community_map_objects_from_json(data: &serde_json::Value) -> Vec<CommunityMapObject> {
     // Extract values from valueRanges[3] (map objects)
-    let values = data["valueRanges"][3]["values"]
-        .as_array()
-        .ok_or("Invalid data structure - valueRanges[3] not found")?;
+    let values = match data["valueRanges"][3]["values"].as_array() {
+        Some(v) => v,
+        None => {
+            println!("No map objects data found in valueRanges[3]");
+            return vec![];
+        }
+    };
 
     println!("Total map objects values: {}", values.len());
     println!("First few map object rows: {:?}", &values.iter().take(3).collect::<Vec<_>>());
 
-    let objects: Vec<CommunityMapObject> = values.iter()
+    let objects: Vec<CommunityMapObject> = values
+        .iter()
         .enumerate()
         .filter_map(|(i, row)| {
             let arr = match row.as_array() {
@@ -946,40 +1083,26 @@ pub fn fetch_community_map_objects(url: String) -> Result<Vec<CommunityMapObject
         .collect();
 
     println!("Collected map objects: {}", objects.len());
-
-    Ok(objects)
+    objects
 }
 
-fn fetch_community_structures(url: String, structure_type_filter: &str) -> Result<Vec<CommunityStructure>, String> {
-    // Fetch the HTML
-    let client = reqwest::blocking::Client::new();
-    let response = client.get(&url).send()
-        .map_err(|e| format!("Failed to fetch URL: {}", e))?;
-    let html = response.text()
-        .map_err(|e| format!("Failed to read response: {}", e))?;
-
-    // Find window.sheetData
-    let start_marker = "window.sheetData = ";
-    let start = html.find(start_marker)
-        .ok_or("window.sheetData not found")?;
-    let json_start = start + start_marker.len();
-    let end = html[json_start..].find(';')
-        .map(|i| json_start + i)
-        .ok_or("End of sheetData not found")?;
-    let json_str = html[json_start..end].trim();
-
-    // Parse JSON
-    let data: serde_json::Value = serde_json::from_str(json_str)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
-
+fn extract_community_structures_from_json(
+    data: &serde_json::Value,
+    structure_type_filter: &str
+) -> Vec<CommunityStructure> {
     // Extract values from valueRanges[5] (structures)
-    let values = data["valueRanges"][5]["values"]
-        .as_array()
-        .ok_or("Invalid data structure - valueRanges[5] not found")?;
+    let values = match data["valueRanges"][5]["values"].as_array() {
+        Some(v) => v,
+        None => {
+            println!("No structures data found in valueRanges[5]");
+            return vec![];
+        }
+    };
 
     println!("Total structures values: {}", values.len());
 
-    let structures: Vec<CommunityStructure> = values.iter()
+    let structures: Vec<CommunityStructure> = values
+        .iter()
         .enumerate()
         .filter_map(|(i, row)| {
             let arr = match row.as_array() {
@@ -1054,7 +1177,12 @@ fn fetch_community_structures(url: String, structure_type_filter: &str) -> Resul
         })
         .collect();
 
-    println!("Collected {} structures of type {}: {}", structures.len(), structure_type_filter, structures.len());
+    println!(
+        "Collected {} structures of type {}: {}",
+        structures.len(),
+        structure_type_filter,
+        structures.len()
+    );
 
-    Ok(structures)
+    structures
 }
