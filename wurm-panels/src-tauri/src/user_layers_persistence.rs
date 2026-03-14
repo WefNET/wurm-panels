@@ -50,13 +50,17 @@ pub fn load_user_layers(map_id: String) -> Result<Vec<UserLayer>, String> {
             if layers_path.exists() {
                 let raw = fs::read_to_string(&layers_path)
                     .map_err(|e| format!("Failed to read user_layers.json: {}", e))?;
-                
+
                 if raw.trim().is_empty() {
                     return Ok(Vec::new());
                 }
 
-                serde_json::from_str::<Vec<UserLayer>>(&raw)
-                    .map_err(|e| format!("Failed to deserialize user layers for map '{}': {}", map_id, e))
+                serde_json::from_str::<Vec<UserLayer>>(&raw).map_err(|e| {
+                    format!(
+                        "Failed to deserialize user layers for map '{}': {}",
+                        map_id, e
+                    )
+                })
             } else {
                 Ok(Vec::new()) // File doesn't exist, return empty list
             }
